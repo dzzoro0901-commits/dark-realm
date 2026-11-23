@@ -113,11 +113,8 @@ const buildings=[
 
 /* شبکه خیابان‌های متصل */
 const roads=[
- // خیابان‌های افقی
  {x:0,y:820,w:2800,h:140},
  {x:0,y:1480,w:2800,h:140},
-
- // خیابان‌های عمودی
  {x:480,y:0,w:120,h:2300},
  {x:1080,y:0,w:140,h:2300},
  {x:1880,y:0,w:140,h:2300},
@@ -443,13 +440,53 @@ function drawBuilding(b){
  ctx.fillText(b.name,b.x+b.w/2-camX,b.y-30-camY);
 }
 
+/* آب‌نمای متقارن */
 function drawFountain(){
- circle(1100,900,65,'#4d5147');
- circle(1100,900,48,'#77705b');
- circle(1100,900,36,'#3c5658');
- circle(1100,900,12,'#9a8a66');
- circle(1100,900,70,'#92816b');
- circle(1100,900,62,'#4d5147');
+ const x=1100,y=900;
+
+ // سایه و لبه بیرونی
+ circle(x+4,y+7,74,'#202820');
+ circle(x,y,72,'#92816b');
+ circle(x,y,65,'#4d5147');
+
+ // حوض سنگی
+ circle(x,y,57,'#77705b');
+ circle(x,y,48,'#3c5658');
+
+ // حلقه داخلی
+ circle(x,y,39,'#8b8069');
+ circle(x,y,33,'#42666a');
+
+ // پایه مرکزی
+ circle(x,y,17,'#74634d');
+ circle(x,y,12,'#b39a6b');
+ circle(x,y,7,'#d0b77d');
+
+ // چهار خروجی کاملاً متقارن
+ const jets=[
+  [0,-27],[27,0],[0,27],[-27,0]
+ ];
+
+ jets.forEach(([dx,dy])=>{
+  circle(x+dx,y+dy,4,'#a6d0cb');
+  circle(x+dx,y+dy,2,'#d2e9dc');
+ });
+
+ // چهار حلقه موج متقارن
+ ctx.strokeStyle='#a6c8bd';
+ ctx.lineWidth=2;
+
+ jets.forEach(([dx,dy])=>{
+  ctx.beginPath();
+  ctx.arc(
+   x+dx-camX,
+   y+dy-camY,
+   7,
+   0,
+   Math.PI*2
+  );
+  ctx.stroke();
+ });
 }
 
 function drawNPC(n){
