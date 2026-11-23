@@ -9,17 +9,16 @@
 *{box-sizing:border-box}
 body{
  margin:0;
+ background:#18251e;
  overflow:hidden;
- background:#101710;
  font-family:Tahoma;
- touch-action:none;
- color:white
+ color:white;
+ touch-action:none
 }
 canvas{
- width:100vw;
- height:100vh;
  display:block;
- image-rendering:pixelated
+ width:100vw;
+ height:100vh
 }
 #ui{
  position:fixed;
@@ -27,8 +26,8 @@ canvas{
  pointer-events:none
 }
 .panel{
- background:rgba(13,19,27,.88);
- border:1px solid #81734f;
+ background:#101827e8;
+ border:1px solid #9b895d;
  border-radius:12px;
  padding:10px
 }
@@ -41,9 +40,9 @@ canvas{
  justify-content:space-between
 }
 #title{
- color:#d9bd84;
- font-weight:bold;
- font-size:17px
+ font-size:17px;
+ color:#d8bd83;
+ font-weight:bold
 }
 #stats{
  font-size:12px;
@@ -51,41 +50,44 @@ canvas{
 }
 #hint{
  position:absolute;
- top:85px;
+ top:80px;
  left:50%;
  transform:translateX(-50%);
- white-space:nowrap;
- background:#111a24dd;
- padding:8px 13px;
+ background:#101827dd;
+ padding:8px 12px;
  border-radius:20px;
- font-size:11px
+ font-size:11px;
+ white-space:nowrap
 }
 #controls{
  position:absolute;
- bottom:18px;
- left:20px;
- right:20px;
+ bottom:20px;
+ left:18px;
+ right:18px;
  display:flex;
  justify-content:space-between;
- align-items:end
+ align-items:end;
+ pointer-events:auto;
 }
 #stick{
  width:120px;
  height:120px;
+ border:2px solid #ffffff66;
+ background:#ffffff20;
  border-radius:50%;
- background:#ffffff12;
- border:2px solid #ffffff55;
- position:relative
+ position:relative;
+ touch-action:none;
 }
 #nub{
- width:48px;
- height:48px;
  position:absolute;
- left:34px;
- top:34px;
+ left:35px;
+ top:35px;
+ width:46px;
+ height:46px;
  border-radius:50%;
- background:#b9c6ba77;
- border:2px solid #ffffff88
+ background:#c5cbd377;
+ border:2px solid #fff;
+ pointer-events:none;
 }
 #buttons{
  display:flex;
@@ -94,69 +96,77 @@ canvas{
 }
 .action{
  border-radius:50%;
- border:1px solid #c4a16c;
+ background:#70552f;
+ border:2px solid #e0bd7c;
  color:white;
- background:#302a20dd;
- font-weight:bold
+ font-weight:bold;
+ touch-action:none;
+ user-select:none;
+ -webkit-user-select:none;
 }
 #run{
  width:65px;
- height:65px
+ height:65px;
+ font-size:12px
 }
 #talk{
  width:75px;
  height:75px;
- background:#66502c
-}
-#start{
- position:fixed;
- inset:0;
- display:flex;
- justify-content:center;
- align-items:center;
- background:#080d13ee;
- padding:20px;
- text-align:center
-}
-.card{
- background:#17212b;
- border:1px solid #b39a67;
- border-radius:20px;
- padding:30px;
- max-width:400px
-}
-h1{
- color:#d6bd8a;
- letter-spacing:4px
-}
-p{
- color:#c3cbd2;
- font-size:13px;
- line-height:2
-}
-#play{
- background:#9b7948;
- color:white;
- border:0;
- padding:15px 35px;
- border-radius:10px;
- font-weight:bold;
- font-size:15px
+ font-size:13px
 }
 #dialog{
  display:none;
  position:absolute;
- bottom:145px;
+ bottom:125px;
  left:5%;
  width:90%;
- background:#101823f5;
+ background:#101827f2;
  border:1px solid #d0ae70;
- border-radius:15px;
- padding:15px;
+ border-radius:14px;
+ padding:16px;
  text-align:center;
- line-height:2
+ line-height:1.8;
+ pointer-events:auto
 }
 #who{color:#e3c78f;font-weight:bold}
+#start{
+ position:fixed;
+ inset:0;
+ background:#090e19ed;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ text-align:center;
+ padding:20px;
+ pointer-events:auto;
+ z-index:10
+}
+.card{
+ background:#131d2c;
+ border:1px solid #a88e5d;
+ border-radius:20px;
+ padding:28px;
+ max-width:420px
+}
+h1{
+ color:#d6bd8a;
+ letter-spacing:3px
+}
+p{
+ font-size:13px;
+ line-height:2;
+ color:#c4cbd4
+}
+#play{
+ background:#9a7947;
+ color:white;
+ border:0;
+ border-radius:12px;
+ padding:14px 35px;
+ font-size:15px;
+ font-weight:bold;
+ touch-action:manipulation
+}
 </style>
 </head>
 
@@ -178,7 +188,7 @@ p{
  </div>
 </div>
 
-<div id="hint">به سرزمین کهن خوش آمدی</div>
+<div id="hint">در شهر حرکت کن و با مردم صحبت کن</div>
 
 <div id="controls">
 
@@ -206,13 +216,13 @@ p{
   <div style="color:#b9a47c">THE OLD TOWN</div>
 
   <p>
-   در سرزمین‌های فراموش‌شده قدم بگذار.<br>
-   شهر قدیمی را کشف کن و رازهای آن را پیدا کن.
+   به شهر قدیمی خوش آمدی.<br>
+   در کوچه‌ها بگرد، با مردم شهر حرف بزن و رازهای این سرزمین را کشف کن.
   </p>
 
   <button id="play">شروع ماجراجویی</button>
 
-  <p>نسخه آزمایشی ۲ · Offline</p>
+  <p>نسخه آزمایشی آفلاین</p>
  </div>
 </div>
 
@@ -222,133 +232,70 @@ const ctx=canvas.getContext("2d");
 
 let W=innerWidth;
 let H=innerHeight;
-
 let camX=0;
 let camY=0;
-
 let started=false;
-let running=false;
 
 function resize(){
  W=innerWidth;
  H=innerHeight;
-
  canvas.width=W*devicePixelRatio;
  canvas.height=H*devicePixelRatio;
-
+ canvas.style.width=W+"px";
+ canvas.style.height=H+"px";
  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
 }
-
 addEventListener("resize",resize);
 resize();
 
-const world={
- w:2400,
- h:2000
-};
+const world={w:2200,h:1800};
 
 const player={
- x:1200,
- y:1000,
- speed:2.3,
+ x:1100,
+ y:900,
+ speed:2.5,
  direction:"down",
  moving:false,
  frame:0
 };
 
-let joy={x:0,y:0};
 let keys={};
+let joy={x:0,y:0};
+let running=false;
+let near=null;
 
-let obstacles=[];
-let trees=[];
-let buildings=[];
-let npcs=[];
+const buildings=[
+ {x:620,y:430,w:220,h:170,name:"خانه"},
+ {x:1370,y:420,w:240,h:190,name:"مغازه"},
+ {x:480,y:1150,w:230,h:180,name:"خانه"},
+ {x:1510,y:1170,w:250,h:200,name:"خانه"},
+ {x:930,y:250,w:240,h:170,name:"تالار"}
+];
 
-/* -----------------------------
-   ساختمان‌ها
------------------------------ */
+const obstacles=buildings.map(b=>({
+ x:b.x+8,
+ y:b.y+25,
+ w:b.w-16,
+ h:b.h-20
+}));
 
-function building(x,y,w,h,name){
- buildings.push({x,y,w,h,name});
+const trees=[];
 
- obstacles.push({
-  x:x+10,
-  y:y+20,
-  w:w-20,
-  h:h-10
- });
-}
-
-building(750,650,230,190,"خانه");
-building(1150,600,260,210,"مغازه");
-building(1550,680,230,190,"خانه");
-building(650,1200,240,190,"خانه");
-building(1450,1250,270,220,"خانه");
-building(1000,350,260,200,"تالار");
-
-/* -----------------------------
-   درختان
------------------------------ */
-
-for(let i=0;i<130;i++){
-
+for(let i=0;i<90;i++){
  let x=Math.random()*world.w;
  let y=Math.random()*world.h;
 
- if(
-  x>900&&x<1500&&
-  y>800&&y<1200
- )continue;
+ if(x>850&&x<1350&&y>700&&y<1100)continue;
 
- trees.push({
-  x,y,
-  size:20+Math.random()*15
- });
-
- obstacles.push({
-  x:x-12,
-  y:y-10,
-  w:24,
-  h:25
- });
+ trees.push({x,y,size:18+Math.random()*14});
 }
 
-/* -----------------------------
-   شخصیت‌های شهر
------------------------------ */
-
-npcs=[
- {
-  x:1200,
-  y:780,
-  name:"نگهبان شهر",
-  msg:"مسافر، مراقب جنگل شمالی باش. چیزهایی در تاریکی حرکت می‌کنند."
- },
- {
-  x:900,
-  y:1050,
-  name:"فروشنده",
-  msg:"به بازار قدیمی خوش آمدی. روزی اجناس زیادی برای فروش خواهم داشت."
- },
- {
-  x:1500,
-  y:1050,
-  name:"مسافر",
-  msg:"در شرق شهر خرابه‌هایی پیدا کرده‌ام. کسی جرئت نزدیک شدن ندارد."
- },
- {
-  x:1200,
-  y:1350,
-  name:"دهقان پیر",
-  msg:"این سرزمین روزگاری تحت فرمان یک پادشاه قدرتمند بود."
- }
+const npcs=[
+ {x:1100,y:690,name:"نگهبان شهر",msg:"راه شمالی خطرناک است. شب‌ها موجودات عجیبی در جنگل دیده می‌شوند."},
+ {x:820,y:980,name:"فروشنده",msg:"به‌زودی چیزهای جالبی برای فروش می‌آورم."},
+ {x:1430,y:950,name:"مسافر مرموز",msg:"اگر دنبال راز این شهر هستی، از خرابه‌های شرقی شروع کن."},
+ {x:1100,y:1190,name:"دهقان پیر",msg:"این شهر روزگاری قلب یک پادشاهی بزرگ بود..."}
 ];
-
-let near=null;
-
-/* -----------------------------
-   کیبورد
------------------------------ */
 
 addEventListener("keydown",e=>{
  keys[e.key.toLowerCase()]=true;
@@ -358,18 +305,13 @@ addEventListener("keyup",e=>{
  keys[e.key.toLowerCase()]=false;
 });
 
-/* -----------------------------
-   جوی‌استیک
------------------------------ */
-
 const stick=document.getElementById("stick");
 const nub=document.getElementById("nub");
 
 let dragging=false;
 
 function moveJoy(e){
-
- let r=stick.getBoundingClientRect();
+ const r=stick.getBoundingClientRect();
 
  let dx=e.clientX-(r.left+r.width/2);
  let dy=e.clientY-(r.top+r.height/2);
@@ -385,66 +327,226 @@ function moveJoy(e){
  joy.x=dx/max;
  joy.y=dy/max;
 
- nub.style.left=(34+dx)+"px";
- nub.style.top=(34+dy)+"px";
+ nub.style.left=(35+dx)+"px";
+ nub.style.top=(35+dy)+"px";
 }
 
 stick.addEventListener("pointerdown",e=>{
+ e.preventDefault();
  dragging=true;
  stick.setPointerCapture(e.pointerId);
  moveJoy(e);
 });
 
 stick.addEventListener("pointermove",e=>{
- if(dragging)moveJoy(e);
+ if(dragging){
+  e.preventDefault();
+  moveJoy(e);
+ }
 });
 
 function stopJoy(){
  dragging=false;
  joy.x=0;
  joy.y=0;
- nub.style.left="34px";
- nub.style.top="34px";
+ nub.style.left="35px";
+ nub.style.top="35px";
 }
 
 stick.addEventListener("pointerup",stopJoy);
 stick.addEventListener("pointercancel",stopJoy);
 
-/* -----------------------------
-   دویدن
------------------------------ */
+/* دکمه دویدن */
 
-document.getElementById("run").addEventListener("pointerdown",()=>{
+const runBtn=document.getElementById("run");
+
+runBtn.addEventListener("pointerdown",e=>{
+ e.preventDefault();
  running=true;
+ runBtn.style.background="#a0804b";
 });
 
-document.getElementById("run").addEventListener("pointerup",()=>{
+function stopRun(){
  running=false;
-});
+ runBtn.style.background="#70552f";
+}
 
-document.getElementById("run").addEventListener("pointercancel",()=>{
- running=false;
-});
+runBtn.addEventListener("pointerup",stopRun);
+runBtn.addEventListener("pointercancel",stopRun);
+runBtn.addEventListener("pointerleave",stopRun);
 
-/* -----------------------------
-   شروع
------------------------------ */
+/* شروع بازی */
 
-document.getElementById("play").onclick=()=>{
+document.getElementById("play").addEventListener("click",()=>{
  started=true;
  document.getElementById("start").style.display="none";
-};
+});
 
-/* -----------------------------
-   برخورد
------------------------------ */
+/* رسم */
+
+function rect(x,y,w,h,c){
+ ctx.fillStyle=c;
+ ctx.fillRect(x-camX,y-camY,w,h);
+}
+
+function circle(x,y,r,c){
+ ctx.fillStyle=c;
+ ctx.beginPath();
+ ctx.arc(x-camX,y-camY,r,0,Math.PI*2);
+ ctx.fill();
+}
+
+/* زمین */
+
+function drawGround(){
+
+ rect(0,0,world.w,world.h,"#29382f");
+
+ for(let y=0;y<world.h;y+=80){
+  for(let x=0;x<world.w;x+=80){
+   if((x+y)%160===0){
+    rect(x,y,80,80,"#2d3d32");
+   }
+  }
+ }
+
+ /* خیابان */
+
+ rect(0,840,world.w,120,"#655747");
+ rect(1040,0,120,world.h,"#655747");
+
+ /* سنگ‌فرش */
+
+ for(let x=0;x<world.w;x+=42){
+  rect(x,860,38,18,"#796a57");
+ }
+
+ for(let y=0;y<world.h;y+=42){
+  rect(1060,y,18,38,"#796a57");
+ }
+
+ /* مسیر فرعی */
+
+ rect(800,600,75,350,"#594b3e");
+ rect(1400,900,90,400,"#594b3e");
+
+}
+
+/* درخت */
+
+function drawTree(t){
+
+ circle(t.x+5,t.y+12,t.size,"#17241c");
+
+ rect(t.x-5,t.y-5,10,25,"#5a402d");
+
+ circle(t.x,t.y-15,t.size,"#1b3022");
+ circle(t.x-10,t.y-24,t.size*.65,"#29452e");
+ circle(t.x+10,t.y-24,t.size*.65,"#314d35");
+ circle(t.x,t.y-35,t.size*.55,"#3a5a3d");
+
+}
+
+/* ساختمان */
+
+function drawBuilding(b){
+
+ rect(b.x+10,b.y+12,b.w,b.h,"#171b1c");
+
+ rect(b.x,b.y,b.w,b.h,"#665548");
+
+ for(let i=0;i<5;i++){
+  rect(b.x+8,b.y+30+i*27,b.w-16,2,"#81705d");
+ }
+
+ rect(b.x-12,b.y-20,b.w+24,38,"#392a28");
+
+ rect(b.x+15,b.y-12,b.w-30,6,"#59403b");
+
+ rect(b.x+25,b.y+55,35,45,"#211e1a");
+ rect(b.x+b.w-60,b.y+55,35,45,"#211e1a");
+
+ rect(b.x+28,b.y+58,29,39,"#b08c54");
+ rect(b.x+b.w-57,b.y+58,29,39,"#b08c54");
+
+ rect(b.x+b.w/2-20,b.y+b.h-65,40,65,"#35241c");
+
+ ctx.fillStyle="#d3c1a0";
+ ctx.font="11px Tahoma";
+ ctx.textAlign="center";
+
+ ctx.fillText(b.name,b.x+b.w/2-camX,b.y-30-camY);
+}
+
+/* میدان */
+
+function drawFountain(){
+ circle(1100,900,65,"#4d5147");
+ circle(1100,900,48,"#77705b");
+ circle(1100,900,36,"#3c5658");
+ circle(1100,900,12,"#9a8a66");
+}
+
+/* NPC */
+
+function drawNPC(n){
+
+ circle(n.x,n.y+10,11,"#111");
+ circle(n.x,n.y,9,"#b98c69");
+ rect(n.x-8,n.y+8,16,20,"#7c5360");
+
+ if(Math.hypot(player.x-n.x,player.y-n.y)<85){
+  ctx.fillStyle="#f3dca5";
+  ctx.font="12px Tahoma";
+  ctx.textAlign="center";
+  ctx.fillText("تعامل",n.x-camX,n.y-25-camY);
+ }
+}
+
+/* بازیکن */
+
+function drawPlayer(){
+
+ let x=player.x;
+ let y=player.y;
+
+ let walk=player.moving?Math.sin(player.frame)*4:0;
+
+ circle(x,y+14,12,"#101010");
+
+ rect(x-8+walk,y+14,6,12,"#292d35");
+ rect(x+2-walk,y+14,6,12,"#292d35");
+
+ rect(x-10,y-3,20,22,"#334b68");
+ rect(x-8,y+2,16,13,"#415e7f");
+
+ rect(x-13,y+2,4,12,"#c49a78");
+ rect(x+9,y+2,4,12,"#c49a78");
+
+ circle(x,y-11,10,"#d3a17d");
+ rect(x-10,y-20,20,6,"#30241f");
+
+ if(player.direction==="left"){
+  rect(x-11,y-15,5,8,"#30241f");
+ }
+
+ if(player.direction==="right"){
+  rect(x+6,y-15,5,8,"#30241f");
+ }
+
+ ctx.fillStyle="#e5d5b6";
+ ctx.font="12px Tahoma";
+ ctx.textAlign="center";
+ ctx.fillText("تو",x-camX,y-35-camY);
+}
+
+/* برخورد */
 
 function collide(x,y){
 
  let r=12;
 
  for(let o of obstacles){
-
   if(
    x+r>o.x&&
    x-r<o.x+o.w&&
@@ -458,9 +560,7 @@ function collide(x,y){
  return false;
 }
 
-/* -----------------------------
-   حرکت
------------------------------ */
+/* حرکت */
 
 function update(){
 
@@ -483,11 +583,11 @@ function update(){
 
  player.moving=length>0.1;
 
- let speed=running?4.3:2.3;
+ let speed=running?4.5:2.5;
 
  if(player.moving){
 
-  player.frame+=running?.23:.13;
+  player.frame+=running?.25:.15;
 
   if(Math.abs(dx)>Math.abs(dy)){
    player.direction=dx>0?"right":"left";
@@ -505,8 +605,8 @@ function update(){
  player.x=Math.max(20,Math.min(world.w-20,player.x));
  player.y=Math.max(20,Math.min(world.h-20,player.y));
 
- camX+=(player.x-W/2-camX)*0.12;
- camY+=(player.y-H/2-camY)*0.12;
+ camX+=(player.x-W/2-camX)*.12;
+ camY+=(player.y-H/2-camY)*.12;
 
  camX=Math.max(0,Math.min(world.w-W,camX));
  camY=Math.max(0,Math.min(world.h-H,camY));
@@ -514,279 +614,42 @@ function update(){
  near=null;
 
  for(let n of npcs){
-  if(Math.hypot(player.x-n.x,player.y-n.y)<70){
+  if(Math.hypot(player.x-n.x,player.y-n.y)<75){
    near=n;
    break;
   }
  }
 }
 
-/* -----------------------------
-   رسم زمین
------------------------------ */
+/* تعامل */
 
-function rect(x,y,w,h,color){
- ctx.fillStyle=color;
- ctx.fillRect(x-camX,y-camY,w,h);
+function interact(){
+
+ document.getElementById("who").textContent=
+  near?near.name:"";
+
+ document.getElementById("words").textContent=
+  near?near.msg:"کسی نزدیکت نیست. کمی در شهر بگرد.";
+
+ const dialog=document.getElementById("dialog");
+ dialog.style.display="block";
+
+ clearTimeout(window.dialogTimer);
+
+ window.dialogTimer=setTimeout(()=>{
+  dialog.style.display="none";
+ },4000);
 }
 
-function circle(x,y,r,color){
- ctx.fillStyle=color;
- ctx.beginPath();
- ctx.arc(x-camX,y-camY,r,0,Math.PI*2);
- ctx.fill();
-}
+document.getElementById("talk").addEventListener("click",interact);
 
-function ground(){
-
- rect(0,0,world.w,world.h,"#28382d");
-
- /* بافت زمین */
-
- for(let y=0;y<world.h;y+=48){
-  for(let x=0;x<world.w;x+=48){
-
-   let seed=(x*13+y*7)%5;
-
-   if(seed===0){
-    rect(x,y,3,3,"#354638");
-   }
-
-   if(seed===2){
-    rect(x+20,y+10,4,3,"#202e25");
-   }
-  }
- }
-
- /* مسیر اصلی */
-
- rect(0,950,world.w,120,"#665747");
- rect(1100,0,120,world.h,"#665747");
-
- rect(0,990,world.w,8,"#796b59");
- rect(1155,0,8,world.h,"#796b59");
-
- /* مسیر فرعی */
-
- rect(800,700,80,400,"#5b4c3e");
- rect(1450,950,100,450,"#5b4c3e");
-
- /* سنگ‌فرش */
-
- for(let y=950;y<1070;y+=24){
-  for(let x=0;x<world.w;x+=40){
-   rect(x,y,36,20,"#756654");
-  }
- }
-
- for(let x=1100;x<1220;x+=24){
-  for(let y=0;y<world.h;y+=40){
-   rect(x,y,20,36,"#756654");
-  }
- }
-}
-
-/* -----------------------------
-   رسم درخت
------------------------------ */
-
-function drawTree(t){
-
- let x=t.x;
- let y=t.y;
- let s=t.size;
-
- /* سایه */
-
- circle(x+5,y+10,s,"#18221c");
-
- /* تنه */
-
- rect(x-6,y-10,12,28,"#59402d");
-
- /* برگ */
-
- circle(x,y-15,s,"#1b3022");
- circle(x-10,y-25,s*.7,"#29452e");
- circle(x+10,y-25,s*.7,"#314d35");
-
- circle(x-5,y-35,s*.6,"#3a5a3d");
-
-}
-
-/* -----------------------------
-   ساختمان
------------------------------ */
-
-function drawBuilding(b){
-
- let x=b.x;
- let y=b.y;
- let w=b.w;
- let h=b.h;
-
- /* سایه */
-
- rect(x+12,y+15,w,h,"#111614");
-
- /* دیوار */
-
- rect(x,y,w,h,"#665548");
-
- /* سنگ */
-
- for(let i=0;i<6;i++){
-  rect(
-   x+10,
-   y+30+i*25,
-   w-20,
-   2,
-   "#81705d"
-  );
- }
-
- /* سقف */
-
- rect(x-12,y-20,w+24,38,"#3b2928");
-
- rect(x+10,y-14,w-20,7,"#57403b");
-
- /* پنجره */
-
- rect(x+25,y+55,35,45,"#211e1a");
- rect(x+w-60,y+55,35,45,"#211e1a");
-
- rect(x+28,y+58,29,39,"#b3935c");
- rect(x+w-57,y+58,29,39,"#b3935c");
-
- /* در */
-
- rect(x+w/2-20,y+h-65,40,65,"#35241c");
- rect(x+w/2-16,y+h-61,32,61,"#53372a");
-
- /* نام */
-
- ctx.fillStyle="#d3c1a0";
- ctx.font="11px Tahoma";
- ctx.textAlign="center";
-
- ctx.fillText(
-  b.name,
-  x+w/2-camX,
-  y-30-camY
- );
-}
-
-/* -----------------------------
-   شخصیت
------------------------------ */
-
-function drawPlayer(){
-
- let x=player.x;
- let y=player.y;
-
- let walk=player.moving?
-  Math.sin(player.frame)*5:0;
-
- /* سایه */
-
- circle(x,y+15,12,"#111");
-
- /* پاها */
-
- rect(x-8+walk,y+14,6,12,"#292d35");
- rect(x+2-walk,y+14,6,12,"#292d35");
-
- /* بدن */
-
- rect(x-10,y-3,20,22,"#334b68");
-
- /* لباس */
-
- rect(x-8,y+2,16,13,"#415e7f");
-
- /* دست */
-
- rect(x-13,y+2,4,12,"#c49a78");
- rect(x+9,y+2,4,12,"#c49a78");
-
- /* سر */
-
- circle(x,y-11,10,"#d3a17d");
-
- /* مو */
-
- rect(x-10,y-20,20,6,"#30241f");
-
- if(player.direction==="left"){
-  rect(x-11,y-15,5,8,"#30241f");
- }
-
- if(player.direction==="right"){
-  rect(x+6,y-15,5,8,"#30241f");
- }
-
- /* نام */
-
- ctx.fillStyle="#e5d5b6";
- ctx.font="12px Tahoma";
- ctx.textAlign="center";
-
- ctx.fillText("تو",x-camX,y-35-camY);
-}
-
-/* -----------------------------
-   NPC
------------------------------ */
-
-function drawNPC(n){
-
- circle(n.x,n.y+10,11,"#111");
-
- circle(n.x,n.y-8,9,"#c49a79");
-
- rect(n.x-9,n.y,18,21,"#795c4c");
-
- rect(n.x-8,n.y-17,16,5,"#342821");
-
- if(near===n){
-
-  ctx.fillStyle="#f1d59c";
-  ctx.font="12px Tahoma";
-  ctx.textAlign="center";
-
-  ctx.fillText(
-   "تعامل",
-   n.x-camX,
-   n.y-35-camY
-  );
- }
-}
-
-/* -----------------------------
-   میدان شهر
------------------------------ */
-
-function drawFountain(){
-
- circle(1200,1000,75,"#4e5147");
- circle(1200,1000,58,"#8c8068");
- circle(1200,1000,43,"#3d5558");
- circle(1200,1000,15,"#9a8a66");
-
- circle(1200,1000,6,"#c0b18b");
-}
-
-/* -----------------------------
-   رسم نهایی
------------------------------ */
+/* رسم کامل */
 
 function draw(){
 
  ctx.clearRect(0,0,W,H);
 
- ground();
+ drawGround();
 
  trees.forEach(drawTree);
 
@@ -797,47 +660,18 @@ function draw(){
  npcs.forEach(drawNPC);
 
  drawPlayer();
-
 }
 
-/* -----------------------------
-   تعامل
------------------------------ */
-
-function interact(){
-
- let dialog=document.getElementById("dialog");
-
- document.getElementById("who").textContent=
-  near?near.name:"";
-
- document.getElementById("words").textContent=
-  near?near.msg:"کسی نزدیکت نیست.";
-
- dialog.style.display="block";
-
- setTimeout(()=>{
-  dialog.style.display="none";
- },4000);
-}
-
-document.getElementById("talk").onclick=interact;
-
-/* -----------------------------
-   حلقه
------------------------------ */
+/* حلقه بازی */
 
 function loop(){
-
  update();
  draw();
-
  requestAnimationFrame(loop);
 }
 
 loop();
 
 </script>
-
 </body>
-</html>
+ </html>
