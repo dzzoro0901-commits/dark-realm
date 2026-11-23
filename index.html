@@ -5,7 +5,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>DARK REALM</title>
-
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#18251e;overflow:hidden;font-family:Tahoma;color:white;touch-action:none}
@@ -30,69 +29,33 @@ canvas{display:block;width:100vw;height:100vh}
 h1{color:#d6bd8a;letter-spacing:3px}
 p{font-size:13px;line-height:2;color:#c4cbd4}
 #play{background:#9a7947;color:white;border:0;border-radius:12px;padding:14px 35px;font-size:15px;font-weight:bold;touch-action:manipulation}
-
-/* تنظیمات */
-#settingsBtn{
- position:absolute;top:160px;left:12px;
- width:46px;height:46px;
- border:1px solid #d0ae70;
- border-radius:13px;
- background:#101827ed;
- color:#e3c78f;
- font-size:25px;
- pointer-events:auto;
-}
-#settingsPanel{
- display:none;
- position:absolute;top:214px;left:12px;
- width:210px;
- background:#101827f5;
- border:1px solid #9b895d;
- border-radius:14px;
- padding:14px;
- pointer-events:auto;
- box-shadow:0 8px 25px #0008;
-}
-#settingsPanel button{
- background:#70552f;color:white;
- border:1px solid #d0ae70;
- border-radius:8px;padding:9px;
- font-family:Tahoma;
-}
+#settingsBtn{position:absolute;top:160px;left:12px;width:46px;height:46px;border:1px solid #d0ae70;border-radius:13px;background:#101827ed;color:#e3c78f;font-size:25px;pointer-events:auto}
+#settingsPanel{display:none;position:absolute;top:214px;left:12px;width:210px;background:#101827f5;border:1px solid #9b895d;border-radius:14px;padding:14px;pointer-events:auto;box-shadow:0 8px 25px #0008}
+#settingsPanel button{background:#70552f;color:white;border:1px solid #d0ae70;border-radius:8px;padding:9px;font-family:Tahoma}
 #volume{width:100%;accent-color:#d0ae70}
 .settingsTitle{color:#e3c78f;font-weight:bold;margin-bottom:14px}
 </style>
 </head>
-
 <body>
 <canvas id="game"></canvas>
 
 <div id="ui">
  <div id="top">
-  <div class="panel">
-   <div id="title">DARK REALM</div>
-   <small>THE OLD TOWN</small>
-  </div>
-  <div class="panel" id="stats">
-   ❤️ 100<br>🪙 25<br>🌅 08:00
-  </div>
+  <div class="panel"><div id="title">DARK REALM</div><small>THE OLD TOWN</small></div>
+  <div class="panel" id="stats">❤️ 100<br>🪙 25<br>🌅 08:00</div>
  </div>
 
  <button id="settingsBtn">⚙️</button>
-
  <div id="settingsPanel">
   <div class="settingsTitle">⚙️ تنظیمات بازی</div>
   <div style="font-size:12px;margin-bottom:8px">🔊 صدای محیط</div>
   <input id="volume" type="range" min="0" max="100" value="35">
-  <div style="display:flex;justify-content:space-between;font-size:10px;color:#aaa">
-   <span>کم</span><span>زیاد</span>
-  </div>
+  <div style="display:flex;justify-content:space-between;font-size:10px;color:#aaa"><span>کم</span><span>زیاد</span></div>
   <button id="soundBtn" style="width:100%;margin-top:13px">🔊 قطع صدا</button>
   <button id="closeSettings" style="width:100%;margin-top:8px">بستن</button>
  </div>
 
  <div id="hint">در شهر حرکت کن و با مردم صحبت کن</div>
-
  <div id="controls">
   <div id="stick"><div id="nub"></div></div>
   <div id="buttons">
@@ -100,21 +63,14 @@ p{font-size:13px;line-height:2;color:#c4cbd4}
    <button class="action" id="talk">تعامل</button>
   </div>
  </div>
-
- <div id="dialog">
-  <div id="who"></div>
-  <div id="words"></div>
- </div>
+ <div id="dialog"><div id="who"></div><div id="words"></div></div>
 </div>
 
 <div id="start">
  <div class="card">
   <h1>DARK REALM</h1>
   <div style="color:#b9a47c">THE OLD TOWN</div>
-  <p>
-   به شهر قدیمی خوش آمدی.<br>
-   در کوچه‌ها بگرد، با مردم شهر حرف بزن و رازهای این سرزمین را کشف کن.
-  </p>
+  <p>به شهر قدیمی خوش آمدی.<br>در کوچه‌ها بگرد، با مردم شهر حرف بزن و رازهای این سرزمین را کشف کن.</p>
   <button id="play">شروع ماجراجویی</button>
   <p>نسخه آزمایشی آفلاین</p>
  </div>
@@ -123,7 +79,6 @@ p{font-size:13px;line-height:2;color:#c4cbd4}
 <script>
 const canvas=document.getElementById('game');
 const ctx=canvas.getContext('2d');
-
 let W=innerWidth,H=innerHeight,camX=0,camY=0,started=false;
 
 function resize(){
@@ -137,47 +92,43 @@ function resize(){
 addEventListener('resize',resize);
 resize();
 
-/* نقشه بزرگ‌تر شده */
 const world={w:2800,h:2300};
 const player={x:1100,y:900,speed:2.5,direction:'down',moving:false,frame:0};
 let keys={},joy={x:0,y:0},running=false,near=null;
 
+/* ساختمان‌ها؛ چیدمان منظم در محله‌ها */
 const buildings=[
- {x:620,y:430,w:220,h:170,name:'خانه',chimney:true},
- {x:1370,y:420,w:240,h:190,name:'مغازه',chimney:true},
- {x:480,y:1150,w:230,h:180,name:'خانه',chimney:true},
- {x:1510,y:1170,w:250,h:200,name:'خانه',chimney:true},
- {x:930,y:250,w:240,h:170,name:'تالار',chimney:true},
+ {x:650,y:350,w:220,h:170,name:'خانه',chimney:true},
+ {x:1400,y:350,w:240,h:190,name:'مغازه',chimney:true},
+ {x:2200,y:350,w:250,h:190,name:'مسافرخانه',chimney:true},
 
- /* ساختمان‌های منطقه جدید */
- {x:2220,y:420,w:250,h:190,name:'مسافرخانه',chimney:true},
- {x:2500,y:1250,w:220,h:180,name:'خانه قدیمی',chimney:true},
- {x:1850,y:1950,w:250,h:190,name:'کلبه',chimney:true},
- {x:650,y:1900,w:230,h:180,name:'خانه جنگلی',chimney:true}
+ {x:650,y:1050,w:230,h:180,name:'خانه',chimney:true},
+ {x:1400,y:1050,w:250,h:200,name:'خانه',chimney:true},
+ {x:2200,y:1050,w:220,h:180,name:'خانه قدیمی',chimney:true},
+
+ {x:650,y:1740,w:230,h:180,name:'خانه جنگلی',chimney:true},
+ {x:1400,y:1740,w:250,h:190,name:'کلبه',chimney:true},
+ {x:2200,y:1740,w:250,h:190,name:'خانه قدیمی',chimney:true}
 ];
 
+/* شبکه خیابان‌های متصل */
 const roads=[
- {x:0,y:830,w:2200,h:140},
- {x:1030,y:0,w:140,h:1800},
- {x:700,y:600,w:100,h:250},
- {x:1450,y:600,w:100,h:250},
- {x:570,y:960,w:100,h:220},
- {x:1600,y:960,w:100,h:220},
- {x:1050,y:420,w:100,h:410},
+ // خیابان‌های افقی
+ {x:0,y:820,w:2800,h:140},
+ {x:0,y:1480,w:2800,h:140},
 
- /* مسیرهای منطقه جدید */
- {x:1650,y:1500,w:1150,h:130},
- {x:2150,y:1400,w:130,h:900},
- {x:1750,y:1850,w:550,h:110},
- {x:400,y:1750,w:650,h:100}
+ // خیابان‌های عمودی
+ {x:480,y:0,w:120,h:2300},
+ {x:1080,y:0,w:140,h:2300},
+ {x:1880,y:0,w:140,h:2300},
+ {x:2580,y:0,w:120,h:2300}
 ];
 
 const buildingZones=buildings.map(b=>({
- x:b.x-45,y:b.y-45,w:b.w+90,h:b.h+90
+ x:b.x-35,y:b.y-35,w:b.w+70,h:b.h+70
 }));
 const fountainZone={x:1030,y:830,w:140,h:140};
 
-/* شخصیت‌های شهر */
 const npcs=[
  {
   x:1100,y:690,name:'مامان ادریس',
@@ -215,20 +166,11 @@ const npcs=[
   color:'#242735',
   route:[{x:1600,y:850},{x:1650,y:900},{x:1700,y:950},{x:1600,y:1000},{x:1550,y:900}]
  },
-
- /* شخصیت جدید: ممد اسموک */
  {
   x:2050,y:1740,name:'ممد اسموک',
   msg:'اوه... سلام رفیق. من ممد اسموکم. راستش یه مدته درگیر یه عادت بد شدم و کنار گذاشتنش برام آسون نیست. بعضی روزا حسابی گیجم... ولی دارم سعی می‌کنم اوضاعمو درست کنم. فکر کنم وقتشه از یکی کمک بگیرم.',
   color:'#292b32',
-  route:[
-   {x:2050,y:1740},
-   {x:2110,y:1770},
-   {x:2180,y:1740},
-   {x:2200,y:1820},
-   {x:2130,y:1860},
-   {x:2050,y:1810}
-  ]
+  route:[{x:2050,y:1740},{x:2110,y:1770},{x:2180,y:1740},{x:2200,y:1820},{x:2130,y:1860},{x:2050,y:1810}]
  }
 ];
 
@@ -241,18 +183,21 @@ function safeTree(x,y,s){
  if(buildingZones.some(b=>overlaps(box,b)))return false;
  if(roads.some(r=>overlaps(box,r)))return false;
  if(overlaps(box,fountainZone))return false;
- if(Math.hypot(x-player.x,y-player.y)<150)return false;
  if(npcs.some(n=>Math.hypot(x-n.x,y-n.y)<100))return false;
  return true;
 }
 
+/* تعداد درخت‌ها کمتر و پخش طبیعی‌تر */
 const trees=[];
-for(let i=0;i<230;i++){
+for(let i=0;i<115;i++){
  for(let a=0;a<100;a++){
   let x=40+Math.random()*(world.w-80);
   let y=40+Math.random()*(world.h-80);
   let size=18+Math.random()*14;
-  if(safeTree(x,y,size)){trees.push({x,y,size});break;}
+  if(safeTree(x,y,size)){
+   trees.push({x,y,size});
+   break;
+  }
  }
 }
 
@@ -262,11 +207,9 @@ trees.forEach(t=>obstacles.push({
  x:t.x-t.size*.55,y:t.y-t.size*.5,w:t.size*1.1,h:t.size*1.1
 }));
 
-/* کیبورد */
 addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;});
 addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
 
-/* جوی استیک */
 const stick=document.getElementById('stick');
 const nub=document.getElementById('nub');
 let dragging=false;
@@ -282,7 +225,8 @@ function moveJoy(e){
  nub.style.top=(35+dy)+'px';
 }
 stick.addEventListener('pointerdown',e=>{
- e.preventDefault();dragging=true;stick.setPointerCapture(e.pointerId);moveJoy(e);
+ e.preventDefault();dragging=true;
+ stick.setPointerCapture(e.pointerId);moveJoy(e);
 });
 stick.addEventListener('pointermove',e=>{
  if(dragging){e.preventDefault();moveJoy(e);}
@@ -294,7 +238,6 @@ function stopJoy(){
 stick.addEventListener('pointerup',stopJoy);
 stick.addEventListener('pointercancel',stopJoy);
 
-/* دویدن */
 const runBtn=document.getElementById('run');
 runBtn.addEventListener('pointerdown',e=>{
  e.preventDefault();running=true;runBtn.style.background='#a0804b';
@@ -304,7 +247,6 @@ runBtn.addEventListener('pointerup',stopRun);
 runBtn.addEventListener('pointercancel',stopRun);
 runBtn.addEventListener('pointerleave',stopRun);
 
-/* تنظیمات */
 const settingsBtn=document.getElementById('settingsBtn');
 const settingsPanel=document.getElementById('settingsPanel');
 const volume=document.getElementById('volume');
@@ -317,15 +259,14 @@ document.getElementById('closeSettings').onclick=()=>{
  settingsPanel.style.display='none';
 };
 
-/* سیستم صدا */
+/* صدا */
 let audioCtx=null,masterGain=null,windGain=null;
-let soundEnabled=true,audioStarted=false,ambientNodes=[],birdTimer=null;
+let soundEnabled=true,audioStarted=false,birdTimer=null;
 
 function initAudio(){
  if(audioStarted)return;
  try{
   audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-
   masterGain=audioCtx.createGain();
   masterGain.gain.value=volume.value/100;
   masterGain.connect(audioCtx.destination);
@@ -341,80 +282,63 @@ function initAudio(){
 
   const noise=audioCtx.createBufferSource();
   noise.buffer=buffer;noise.loop=true;
-
   const filter=audioCtx.createBiquadFilter();
   filter.type='lowpass';filter.frequency.value=350;
-
   const noiseGain=audioCtx.createGain();
   noiseGain.gain.value=.4;
   noise.connect(filter);filter.connect(noiseGain);
   noiseGain.connect(windGain);noise.start();
-  ambientNodes.push(noise);
 
   const hum=audioCtx.createOscillator();
   const humGain=audioCtx.createGain();
   hum.type='sine';hum.frequency.value=75;
   humGain.gain.value=.015;
   hum.connect(humGain);humGain.connect(masterGain);
-  hum.start();ambientNodes.push(hum);
+  hum.start();
 
   audioStarted=true;
   startBirds();
  }catch(e){console.log('Audio unavailable');}
 }
 
-/* صدای پرنده */
+function daylight(){
+ let t=(gameTime%dayLength)/dayLength;
+ return (Math.sin(t*Math.PI*2-Math.PI/2)+1)/2;
+}
+
 function birdChirp(){
  if(!audioCtx||!soundEnabled||!started)return;
-
  const now=audioCtx.currentTime;
  const osc=audioCtx.createOscillator();
  const gain=audioCtx.createGain();
  const filter=audioCtx.createBiquadFilter();
-
  osc.type='sine';
  filter.type='bandpass';
  filter.frequency.value=2600;
  filter.Q.value=1.2;
-
  const base=2200+Math.random()*500;
  const duration=.16+Math.random()*.12;
-
  osc.frequency.setValueAtTime(base,now);
  osc.frequency.exponentialRampToValueAtTime(base*1.35,now+duration*.45);
  osc.frequency.exponentialRampToValueAtTime(base*.9,now+duration);
-
  gain.gain.setValueAtTime(.0001,now);
  gain.gain.linearRampToValueAtTime(.012,now+.025);
  gain.gain.exponentialRampToValueAtTime(.0001,now+duration);
-
- osc.connect(filter);
- filter.connect(gain);
- gain.connect(masterGain);
-
- osc.start(now);
- osc.stop(now+duration+.02);
+ osc.connect(filter);filter.connect(gain);gain.connect(masterGain);
+ osc.start(now);osc.stop(now+duration+.02);
 }
 
 function birdSound(){
  birdChirp();
  if(Math.random()<.45){
-  setTimeout(()=>{
-   if(soundEnabled&&started&&audioCtx)birdChirp();
-  },180+Math.random()*180);
+  setTimeout(()=>{if(soundEnabled&&started&&audioCtx)birdChirp();},180+Math.random()*180);
  }
 }
-
 function startBirds(){
  if(birdTimer)clearTimeout(birdTimer);
-
  function schedule(){
   if(!started||!audioCtx)return;
-
-  if(soundEnabled&&daylight()>.55&&Math.random()<.7){
-   birdSound();
-  }
-
+  if(soundEnabled&&daylight()>.55&&Math.random()<.7)birdSound();
   birdTimer=setTimeout(schedule,7000+Math.random()*8000);
  }
  schedule();
@@ -422,22 +346,13 @@ function startBirds(){
 
 soundBtn.onclick=()=>{
  soundEnabled=!soundEnabled;
- if(masterGain){
-  masterGain.gain.setTargetAtTime(
-   soundEnabled?volume.value/100:0,
-   audioCtx.currentTime,.2
-  );
- }
+ if(masterGain)masterGain.gain.setTargetAtTime(soundEnabled?volume.value/100:0,audioCtx.currentTime,.2);
  soundBtn.textContent=soundEnabled?'🔊 قطع صدا':'🔇 فعال کردن صدا';
 };
-
 volume.oninput=e=>{
- if(masterGain&&soundEnabled){
-  masterGain.gain.setTargetAtTime(e.target.value/100,audioCtx.currentTime,.1);
- }
+ if(masterGain&&soundEnabled)masterGain.gain.setTargetAtTime(e.target.value/100,audioCtx.currentTime,.1);
 };
 
-/* شروع */
 document.getElementById('play').addEventListener('click',()=>{
  started=true;
  document.getElementById('start').style.display='none';
@@ -445,7 +360,6 @@ document.getElementById('play').addEventListener('click',()=>{
  if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
 });
 
-/* ابزار رسم */
 function rect(x,y,w,h,c){
  ctx.fillStyle=c;ctx.fillRect(x-camX,y-camY,w,h);
 }
@@ -454,46 +368,49 @@ function circle(x,y,r,c){
  ctx.arc(x-camX,y-camY,r,0,Math.PI*2);ctx.fill();
 }
 
-/* زمین */
+/* زمین و جاده‌ها */
 function drawGround(){
  rect(0,0,world.w,world.h,'#29382f');
+
  for(let y=0;y<world.h;y+=80){
   for(let x=0;x<world.w;x+=80){
    if((x+y)%160===0)rect(x,y,80,80,'#2d3d32');
   }
  }
- roads.forEach(r=>rect(r.x-8,r.y-8,r.w+16,r.h+16,'#403a32'));
- roads.forEach(r=>rect(r.x,r.y,r.w,r.h,'#655747'));
 
- for(let x=0;x<world.w;x+=44){
-  rect(x,850,38,18,'#796a57');
-  rect(x+20,892,38,18,'#796a57');
-  rect(x,934,38,18,'#796a57');
- }
- for(let y=0;y<world.h;y+=44){
-  rect(1050,y,18,38,'#796a57');
-  rect(1095,y+20,18,38,'#796a57');
-  rect(1140,y,18,38,'#796a57');
- }
  roads.forEach(r=>{
-  if(r.w<200){
-   for(let y=r.y;y<r.y+r.h;y+=36){
-    rect(r.x+8,y,20,28,'#746553');
-    rect(r.x+42,y+12,20,28,'#796a57');
+  rect(r.x-9,r.y-9,r.w+18,r.h+18,'#403a32');
+  rect(r.x,r.y,r.w,r.h,'#655747');
+ });
+
+ // سنگ‌فرش یکدست و منظم
+ roads.forEach(r=>{
+  const horizontal=r.w>=r.h;
+  if(horizontal){
+   for(let y=r.y+8;y<r.y+r.h-5;y+=34){
+    for(let x=r.x+8;x<r.x+r.w-5;x+=42){
+     let offset=(Math.floor((y-r.y)/34)%2)*20;
+     rect(x+offset,y,28,22,'#796a57');
+     rect(x+offset+29,y,3,22,'#51483c');
+    }
    }
   }else{
-   for(let x=r.x;x<r.x+r.w;x+=40){
-    rect(x,r.y+10,28,20,'#746553');
-    rect(x+15,r.y+45,28,20,'#796a57');
+   for(let x=r.x+8;x<r.x+r.w-5;x+=34){
+    for(let y=r.y+8;y<r.y+r.h-5;y+=42){
+     let offset=(Math.floor((x-r.x)/34)%2)*20;
+     rect(x,y+offset,22,28,'#796a57');
+     rect(x,y+offset+29,22,3,'#51483c');
+    }
    }
   }
  });
+
+ // میدان مرکزی
  circle(1100,900,100,'#746653');
  circle(1100,900,86,'#665747');
  circle(1100,900,70,'#796a57');
 }
 
-/* درخت */
 function drawTree(t){
  let{x,y,size:s}=t;
  circle(x+6,y+13,s,'#17241c');
@@ -505,7 +422,6 @@ function drawTree(t){
  circle(x-5,y-23,s*.35,'#476846');
 }
 
-/* ساختمان */
 function drawBuilding(b){
  rect(b.x+10,b.y+12,b.w,b.h,'#171b1c');
  rect(b.x,b.y,b.w,b.h,'#665548');
@@ -527,7 +443,6 @@ function drawBuilding(b){
  ctx.fillText(b.name,b.x+b.w/2-camX,b.y-30-camY);
 }
 
-/* میدان */
 function drawFountain(){
  circle(1100,900,65,'#4d5147');
  circle(1100,900,48,'#77705b');
@@ -537,7 +452,6 @@ function drawFountain(){
  circle(1100,900,62,'#4d5147');
 }
 
-/* NPC */
 function drawNPC(n){
  let walk=n.walk||0;
  let step=n.moving?Math.sin(walk)*3:0;
@@ -548,20 +462,15 @@ function drawNPC(n){
  rect(n.x-8,n.y+8,16,20,n.color||'#7c5360');
  rect(n.x-13,n.y+10,4,12,'#c49a78');
  rect(n.x+9,n.y+10,4,12,'#c49a78');
-
  ctx.fillStyle='#f3dca5';
- ctx.font='12px Tahoma';
- ctx.textAlign='center';
+ ctx.font='12px Tahoma';ctx.textAlign='center';
  ctx.fillText(n.name,n.x-camX,n.y-28-camY);
-
  if(Math.hypot(player.x-n.x,player.y-n.y)<85){
-  ctx.fillStyle='#fff';
-  ctx.font='12px Tahoma';
+  ctx.fillStyle='#fff';ctx.font='12px Tahoma';
   ctx.fillText('تعامل',n.x-camX,n.y-43-camY);
  }
 }
 
-/* بازیکن */
 function drawPlayer(){
  let x=player.x,y=player.y;
  let walk=player.moving?Math.sin(player.frame)*4:0;
@@ -576,19 +485,15 @@ function drawPlayer(){
  rect(x-10,y-20,20,6,'#30241f');
  if(player.direction==='left')rect(x-11,y-15,5,8,'#30241f');
  if(player.direction==='right')rect(x+6,y-15,5,8,'#30241f');
- ctx.fillStyle='#e5d5b6';
- ctx.font='12px Tahoma';
- ctx.textAlign='center';
+ ctx.fillStyle='#e5d5b6';ctx.font='12px Tahoma';ctx.textAlign='center';
  ctx.fillText('تو',x-camX,y-35-camY);
 }
 
-/* برخورد */
 function collide(x,y){
  let r=12;
  return obstacles.some(o=>x+r>o.x&&x-r<o.x+o.w&&y+r>o.y&&y-r<o.y+o.h);
 }
 
-/* حرکت NPC */
 function moveNPC(n,dt){
  if(!n.route||!n.route.length)return;
  if(n.target===undefined)n.target=0;
@@ -596,9 +501,7 @@ function moveNPC(n,dt){
  let dx=p.x-n.x,dy=p.y-n.y,d=Math.hypot(dx,dy);
  if(d<8){
   n.target=(n.target+1)%n.route.length;
-  n.pause=30+Math.random()*70;
-  n.moving=false;
-  return;
+  n.pause=30+Math.random()*70;n.moving=false;return;
  }
  if(n.pause>0){n.pause-=dt;n.moving=false;return;}
  let speed=.42*dt;
@@ -608,36 +511,23 @@ function moveNPC(n,dt){
   n.x=nx;n.y=ny;n.moving=true;n.walk=(n.walk||0)+dt*.08;
  }else{
   n.target=(n.target+1)%n.route.length;
-  n.pause=15;
-  n.moving=false;
+  n.pause=15;n.moving=false;
  }
 }
 
-/* زمان */
+/* ساعت و نور */
 let gameTime=0;
 const dayLength=240;
 let smoke=[];
 for(let i=0;i<40;i++){
- smoke.push({
-  x:0,y:0,r:3+Math.random()*6,
-  life:Math.random(),speed:.2+Math.random()*.35,
-  drift:Math.random()*2-1
- });
+ smoke.push({x:0,y:0,r:3+Math.random()*6,life:Math.random(),speed:.2+Math.random()*.35,drift:Math.random()*2-1});
 }
 
 function getGameClock(){
- let totalMinutes=360+(gameTime/dayLength)*1440;
- totalMinutes%=1440;
+ let totalMinutes=(360+(gameTime/dayLength)*1440)%1440;
  let hour=Math.floor(totalMinutes/60);
  let minute=Math.floor(totalMinutes%60);
- return{
-  hour,minute,
-  text:String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0')
- };
-}
-function daylight(){
- let t=(gameTime%dayLength)/dayLength;
- return (Math.sin(t*Math.PI*2-Math.PI/2)+1)/2;
+ return{hour,minute,text:String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0')};
 }
 function getPhase(){
  const c=getGameClock();
@@ -647,7 +537,6 @@ function getPhase(){
  return '🌙 شب';
 }
 
-/* چراغ‌ها */
 function drawLights(day){
  let darkness=1-day;
  buildings.forEach(b=>{
@@ -663,10 +552,10 @@ function drawLights(day){
   }
  });
  const lamps=[
-  [500,800],[900,800],[1300,800],[1700,800],
+  [500,800],[900,800],[1300,800],[1700,800],[2300,800],
   [1000,600],[1200,600],[1000,1100],[1200,1100],
-  [1900,1500],[2300,1500],[2600,1500],
-  [2200,1750],[2200,2050],[1900,1850]
+  [500,1500],[1000,1500],[1500,1500],[2000,1500],[2500,1500],
+  [500,1900],[1100,1900],[1900,1900],[2600,1900]
  ];
  lamps.forEach(([x,y])=>{
   circle(x,y,5,'#c6a56b');
@@ -674,13 +563,11 @@ function drawLights(day){
    let g=ctx.createRadialGradient(x-camX,y-camY,2,x-camX,y-camY,65);
    g.addColorStop(0,`rgba(255,205,120,${darkness*.45})`);
    g.addColorStop(1,'rgba(255,205,120,0)');
-   ctx.fillStyle=g;
-   ctx.fillRect(x-65-camX,y-65-camY,130,130);
+   ctx.fillStyle=g;ctx.fillRect(x-65-camX,y-65-camY,130,130);
   }
  });
 }
 
-/* دود طبیعی */
 function drawSmoke(dt){
  buildings.filter(b=>b.chimney).forEach(b=>{
   let x=b.x+b.w-35,y=b.y-36;
@@ -697,7 +584,6 @@ function drawSmoke(dt){
  });
 }
 
-/* نور محیط */
 function drawAtmosphere(day){
  let darkness=1-day;
  ctx.fillStyle=`rgba(9,18,38,${darkness*.58})`;
@@ -712,21 +598,17 @@ function drawAtmosphere(day){
  }
 }
 
-/* به‌روزرسانی */
 function update(dt){
  if(!started)return;
  gameTime+=dt/60;
-
  let dx=joy.x,dy=joy.y;
  if(keys.w||keys.arrowup)dy-=1;
  if(keys.s||keys.arrowdown)dy+=1;
  if(keys.a||keys.arrowleft)dx-=1;
  if(keys.d||keys.arrowright)dx+=1;
-
  let length=Math.hypot(dx,dy);
  if(length>1){dx/=length;dy/=length;}
  player.moving=length>.1;
-
  let speed=running?4.5:2.5;
  if(player.moving){
   player.frame+=running?.25:.15;
@@ -736,15 +618,12 @@ function update(dt){
   if(!collide(nx,player.y))player.x=nx;
   if(!collide(player.x,ny))player.y=ny;
  }
-
  player.x=Math.max(20,Math.min(world.w-20,player.x));
  player.y=Math.max(20,Math.min(world.h-20,player.y));
-
  camX+=(player.x-W/2-camX)*.12;
  camY+=(player.y-H/2-camY)*.12;
  camX=Math.max(0,Math.min(world.w-W,camX));
  camY=Math.max(0,Math.min(world.h-H,camY));
-
  npcs.forEach(n=>moveNPC(n,dt));
  near=null;
  for(let n of npcs){
@@ -752,7 +631,6 @@ function update(dt){
  }
 }
 
-/* تعامل */
 function interact(){
  document.getElementById('who').textContent=near?near.name:'';
  document.getElementById('words').textContent=near?near.msg:'کسی نزدیکت نیست. کمی در شهر بگرد.';
@@ -763,7 +641,6 @@ function interact(){
 }
 document.getElementById('talk').addEventListener('click',interact);
 
-/* رسم بازی */
 function draw(dt){
  ctx.clearRect(0,0,W,H);
  drawGround();
@@ -776,13 +653,10 @@ function draw(dt){
  npcs.forEach(drawNPC);
  drawPlayer();
  drawAtmosphere(day);
-
  let clock=getGameClock();
- document.getElementById('stats').innerHTML=
- '❤️ 100<br>🪙 25<br>'+getPhase()+'<br>🕐 '+clock.text;
+ document.getElementById('stats').innerHTML='❤️ 100<br>🪙 25<br>'+getPhase()+'<br>🕐 '+clock.text;
 }
 
-/* حلقه بازی */
 let last=performance.now();
 function loop(now){
  let dt=Math.min(2,(now-last)/16.67);
