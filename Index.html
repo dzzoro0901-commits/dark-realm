@@ -1,0 +1,184 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DARK REALM</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;overflow:hidden;background:#18251e;font-family:Tahoma;color:white;touch-action:none}
+canvas{display:block;width:100vw;height:100vh}
+#top{position:fixed;top:12px;right:12px;left:12px;display:flex;justify-content:space-between;pointer-events:none}
+.panel{background:#101827df;border:1px solid #9b895d66;border-radius:12px;padding:10px;font-size:12px}
+#title{font-size:16px;color:#d8bd83;font-weight:bold}
+#hint{position:fixed;top:72px;left:50%;transform:translateX(-50%);background:#101827dd;padding:8px 12px;border-radius:20px;font-size:11px;white-space:nowrap}
+#controls{position:fixed;bottom:20px;left:18px;right:18px;display:flex;justify-content:space-between;align-items:end}
+#stick{width:112px;height:112px;border:1px solid #ffffff66;background:#ffffff22;border-radius:50%;position:relative}
+#nub{position:absolute;left:32px;top:32px;width:46px;height:46px;border-radius:50%;background:#c5cbd366;border:1px solid #fff}
+#talk{width:68px;height:68px;border-radius:50%;background:#70552f;border:1px solid #e0bd7c;color:white;font-weight:bold}
+#dialog{display:none;position:fixed;bottom:110px;left:5%;width:90%;background:#101827f2;border:1px solid #d0ae70;border-radius:14px;padding:16px;text-align:center;line-height:1.8}
+#dialog b{color:#e3c78f}
+#start{position:fixed;inset:0;background:#090e19ed;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
+.card{background:#131d2c;border:1px solid #a88e5d;border-radius:20px;padding:28px;max-width:420px}
+h1{color:#d6bd8a;letter-spacing:3px}
+p{font-size:13px;line-height:2;color:#c4cbd4}
+#play{background:#9a7947;color:white;border:0;border-radius:12px;padding:14px 35px;font-size:15px;font-weight:bold}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="top">
+ <div class="panel"><div id="title">DARK REALM</div>سرزمین کهن</div>
+ <div class="panel">❤️ 100　|　🪙 25</div>
+</div>
+<div id="hint">در شهر حرکت کن و با مردم صحبت کن</div>
+<div id="dialog"><b id="who"></b><div id="words"></div></div>
+<div id="controls">
+ <div id="stick"><div id="nub"></div></div>
+ <button id="talk">تعامل</button>
+</div>
+<div id="start">
+ <div class="card">
+  <h1>DARK REALM</h1>
+  <div style="color:#b9a47c">THE OLD TOWN</div>
+  <p>به شهر قدیمی خوش آمدی.<br>در کوچه‌ها بگرد، با مردم شهر حرف بزن و رازهای این سرزمین را کشف کن.</p>
+  <button id="play">شروع ماجراجویی</button>
+  <p>نسخه آزمایشی آفلاین · مناسب موبایل</p>
+ </div>
+</div>
+<script>
+const canvas=document.getElementById('game');
+const ctx=canvas.getContext('2d');
+let W=innerWidth,H=innerHeight,camX=0,camY=0,started=false;
+function resize(){
+ W=innerWidth;H=innerHeight;
+ canvas.width=W*devicePixelRatio;
+ canvas.height=H*devicePixelRatio;
+ canvas.style.width=W+'px';canvas.style.height=H+'px';
+ ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+}
+addEventListener('resize',resize);resize();
+
+const world={w:1800,h:1300};
+const player={x:900,y:680,speed:2.7};
+const npcs=[
+{x:900,y:500,name:'نگهبان شهر',msg:'راه شمالی خطرناک است. شب‌ها موجودات عجیبی در جنگل دیده می‌شوند.'},
+{x:650,y:740,name:'فروشنده',msg:'به‌زودی چیزهای جالبی برای فروش می‌آورم.'},
+{x:1180,y:720,name:'مسافر مرموز',msg:'اگر دنبال راز این شهر هستی، از خرابه‌های شرقی شروع کن.'},
+{x:1000,y:900,name:'دهقان پیر',msg:'این شهر روزگاری قلب یک پادشاهی بزرگ بود...'}
+];
+const buildings=[
+{x:560,y:370,w:190,h:150,c:'#55463c'},
+{x:1040,y:340,w:220,h:170,c:'#4c4140'},
+{x:450,y:850,w:190,h:145,c:'#51443a'},
+{x:1230,y:870,w:210,h:160,c:'#51443a'},
+{x:790,y:250,w:170,h:115,c:'#5b4b3e'}
+];
+let keys={},joy={x:0,y:0},near=null;
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true});
+addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+const stick=document.getElementById('stick');
+const nub=document.getElementById('nub');
+let dragging=false;
+function moveJoy(e){
+ const r=stick.getBoundingClientRect();
+ let dx=e.clientX-(r.left+r.width/2);
+ let dy=e.clientY-(r.top+r.height/2);
+ let d=Math.hypot(dx,dy),max=34;
+ if(d>max){dx=dx/d*max;dy=dy/d*max}
+ joy.x=dx/max;joy.y=dy/max;
+ nub.style.left=(32+dx)+'px';nub.style.top=(32+dy)+'px';
+}
+stick.addEventListener('pointerdown',e=>{
+ dragging=true;stick.setPointerCapture(e.pointerId);moveJoy(e);
+});
+stick.addEventListener('pointermove',e=>{if(dragging)moveJoy(e)});
+function stopJoy(){
+ dragging=false;joy.x=0;joy.y=0;
+ nub.style.left='32px';nub.style.top='32px';
+}
+stick.addEventListener('pointerup',stopJoy);
+stick.addEventListener('pointercancel',stopJoy);
+
+function interact(){
+ document.getElementById('who').textContent=near?near.name:'';
+ document.getElementById('words').textContent=near?near.msg:'کسی نزدیکت نیست. کمی در شهر بگرد.';
+ document.getElementById('dialog').style.display='block';
+ setTimeout(()=>document.getElementById('dialog').style.display='none',4000);
+}
+document.getElementById('talk').onclick=interact;
+document.getElementById('play').onclick=()=>{
+ started=true;document.getElementById('start').style.display='none';
+};
+function rect(x,y,w,h,c){
+ ctx.fillStyle=c;ctx.fillRect(x-camX,y-camY,w,h);
+}
+function circle(x,y,r,c){
+ ctx.fillStyle=c;ctx.beginPath();
+ ctx.arc(x-camX,y-camY,r,0,Math.PI*2);ctx.fill();
+}
+function draw(){
+ ctx.clearRect(0,0,W,H);
+ rect(0,0,world.w,world.h,'#29382f');
+ for(let y=0;y<world.h;y+=90)
+ for(let x=0;x<world.w;x+=90)
+ rect(x,y,86,86,((x+y)/90)%2?'#29372f':'#2b3931');
+
+ rect(0,590,world.w,130,'#625747');
+ rect(835,0,130,world.h,'#625747');
+ rect(0,640,world.w,28,'#786a55');
+ rect(885,0,28,world.h,'#786a55');
+
+ for(let i=0;i<40;i++){
+  let x=(i*173)%world.w,y=(i*239)%world.h;
+  if((x>800&&x<1000)||(y>580&&y<730))continue;
+  circle(x,y,18,'#17251e');circle(x-5,y-7,12,'#344b38');
+ }
+ buildings.forEach(b=>{
+  rect(b.x+7,b.y+9,b.w,b.h,'#171b1c');
+  rect(b.x,b.y,b.w,b.h,b.c);
+  rect(b.x-8,b.y-10,b.w+16,22,'#342c2b');
+  rect(b.x+b.w/2-18,b.y+b.h-55,36,55,'#241d1a');
+  rect(b.x+25,b.y+35,30,34,'#b08c54');
+ });
+ circle(900,650,65,'#4d5147');
+ circle(900,650,48,'#77705b');
+ circle(900,650,12,'#9a8a66');
+
+ npcs.forEach(n=>{
+  circle(n.x,n.y+10,12,'#111');
+  circle(n.x,n.y,10,'#b98c69');
+  rect(n.x-8,n.y+8,16,20,'#7c5360');
+  if(Math.hypot(player.x-n.x,player.y-n.y)<85){
+   ctx.fillStyle='#f3dca5';ctx.font='12px Tahoma';
+   ctx.textAlign='center';ctx.fillText('تعامل',n.x-camX,n.y-25-camY);
+  }
+ });
+ circle(player.x,player.y+10,12,'#101010');
+ circle(player.x,player.y-5,10,'#e0b18a');
+ rect(player.x-9,player.y+2,18,25,'#344e70');
+ ctx.fillStyle='#d8c59d';ctx.font='12px Tahoma';
+ ctx.textAlign='center';ctx.fillText('تو',player.x-camX,player.y-24-camY);
+}
+function loop(){
+ if(started){
+  let dx=joy.x,dy=joy.y;
+  if(keys.a||keys.arrowleft)dx-=1;
+  if(keys.d||keys.arrowright)dx+=1;
+  if(keys.w||keys.arrowup)dy-=1;
+  if(keys.s||keys.arrowdown)dy+=1;
+  let l=Math.hypot(dx,dy);
+  if(l>1){dx/=l;dy/=l}
+  player.x=Math.max(30,Math.min(world.w-30,player.x+dx*player.speed));
+  player.y=Math.max(30,Math.min(world.h-30,player.y+dy*player.speed));
+  camX=Math.max(0,Math.min(world.w-W,player.x-W/2));
+  camY=Math.max(0,Math.min(world.h-H,player.y-H/2));
+  near=npcs.find(n=>Math.hypot(player.x-n.x,player.y-n.y)<75)||null;
+ }
+ draw();requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
