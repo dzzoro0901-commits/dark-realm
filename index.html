@@ -80,11 +80,14 @@ p{font-size:13px;line-height:2;color:#c4cbd4}
 const canvas=document.getElementById('game');
 const ctx=canvas.getContext('2d',{alpha:false});
 let W=innerWidth,H=innerHeight,camX=0,camY=0,started=false;
-let DPR=Math.min(window.devicePixelRatio||1,1.35);
+
+/* تنظیم کیفیت برای گوشی */
+let DPR=1;
 
 function resize(){
- W=innerWidth;H=innerHeight;
- DPR=Math.min(window.devicePixelRatio||1,1.35);
+ W=innerWidth;
+ H=innerHeight;
+ DPR=Math.min(window.devicePixelRatio||1,1);
  canvas.width=Math.round(W*DPR);
  canvas.height=Math.round(H*DPR);
  canvas.style.width=W+'px';
@@ -145,8 +148,8 @@ function safeTree(x,y,s){
 }
 
 const trees=[];
-for(let i=0;i<95;i++){
- for(let a=0;a<100;a++){
+for(let i=0;i<65;i++){
+ for(let a=0;a<70;a++){
   let x=40+Math.random()*(world.w-80);
   let y=40+Math.random()*(world.h-80);
   let size=18+Math.random()*14;
@@ -309,7 +312,6 @@ function circle(x,y,r,c){
  ctx.fillStyle=c;ctx.beginPath();
  ctx.arc(x-camX,y-camY,r,0,Math.PI*2);ctx.fill();
 }
-
 function visible(x,y,w,h,margin=80){
  return x+w>camX-margin&&x<camX+W+margin&&y+h>camY-margin&&y<camY+H+margin;
 }
@@ -332,9 +334,7 @@ function drawGround(){
  roads.forEach(r=>{
   if(!visible(r.x-10,r.y-10,r.w+20,r.h+20))return;
   rect(r.x-9,r.y-9,r.w+18,r.h+18,'#403a32');
- });
- roads.forEach(r=>{
-  if(visible(r.x,r.y,r.w,r.h))rect(r.x,r.y,r.w,r.h,'#655747');
+  rect(r.x,r.y,r.w,r.h,'#655747');
  });
 
  ctx.save();
@@ -358,9 +358,11 @@ function drawGround(){
  }
  ctx.restore();
 
- circle(1150,890,100,'#746653');
- circle(1150,890,86,'#665747');
- circle(1150,890,70,'#796a57');
+ if(visible(1050,790,200,200)){
+  circle(1150,890,100,'#746653');
+  circle(1150,890,86,'#665747');
+  circle(1150,890,70,'#796a57');
+ }
 }
 
 function drawTree(t){
@@ -397,6 +399,7 @@ function drawBuilding(b){
 }
 
 function drawFountain(){
+ if(!visible(1070,810,160,160))return;
  const x=1150,y=890;
  circle(x,y,65,'#4d5147');
  circle(x,y,48,'#77705b');
@@ -476,8 +479,8 @@ function moveNPC(n,dt){
 let gameTime=0;
 const dayLength=240;
 let smoke=[];
-for(let i=0;i<36;i++){
- smoke.push({r:3+Math.random()*6,life:Math.random(),speed:.2+Math.random()*.35,drift:Math.random()*2-1});
+for(let i=0;i<18;i++){
+ smoke.push({r:3+Math.random()*5,life:Math.random(),speed:.2+Math.random()*.35,drift:Math.random()*2-1});
 }
 
 function getGameClock(){
@@ -509,37 +512,37 @@ function drawLights(day){
   [500,1500],[1000,1500],[1500,1500],[2000,1500],[2500,1500],
   [500,1900],[1100,1900],[1900,1900],[2600,1900]
  ];
- lamps.forEach(([x,y])=>{
+ for(let i=0;i<lamps.length;i++){
+  let x=lamps[i][0],y=lamps[i][1];
   if(visible(x-8,y-8,16,16))circle(x,y,5,'#c6a56b');
- });
+ }
 }
 
-/* تابع دود اصلاح شد؛ بستن forEach قبلاً ناقص بود */
 function drawSmoke(dt){
  buildings.forEach((b,index)=>{
   if(!b.chimney||!visible(b.x+b.w-80,b.y-120,100,100))return;
   let x=b.x+b.w-35,y=b.y-36;
-  for(let i=0;i<4;i++){
-   let p=smoke[(index*4+i)%smoke.length];
-   p.life+=dt*p.speed*.006;
+  for(let i=0;i<2;i++){
+   let p=smoke[(index*2+i)%smoke.length];
+   p.life+=dt*p.speed*.004;
    if(p.life>1)p.life=0;
-   let sway=Math.sin(gameTime*1.5+p.life*8)*12;
-   let sx=x+sway+p.drift*p.life*20;
-   let sy=y-p.life*70;
-   circle(sx,sy,p.r*(.5+p.life),`rgba(190,195,190,${.16*(1-p.life)})`);
+   let sway=Math.sin(gameTime+p.life*5)*7;
+   circle(x+sway+p.drift*p.life*12,y-p.life*55,p.r*(.5+p.life),`rgba(190,195,190,${.12*(1-p.life)})`);
   }
  });
 }
 
 function drawAtmosphere(day){
  let darkness=1-day;
- ctx.fillStyle=`rgba(9,18,38,${darkness*.58})`;
- ctx.fillRect(0,0,W,H);
+ if(darkness>.01){
+  ctx.fillStyle=`rgba(9,18,38,${darkness*.58})`;
+  ctx.fillRect(0,0,W,H);
+ }
  let clock=getGameClock(),orange=0;
  if(clock.hour>=5&&clock.hour<8)orange=1-(clock.hour-5)/3;
  if(clock.hour>=17&&clock.hour<20)orange=(clock.hour-17)/3;
  orange=Math.max(0,Math.min(1,orange));
- if(orange>0){
+ if(orange>.01){
   ctx.fillStyle=`rgba(180,95,40,${orange*.09})`;
   ctx.fillRect(0,0,W,H);
  }
@@ -593,14 +596,14 @@ function draw(dt){
  ctx.clearRect(0,0,W,H);
  drawGround();
 
- trees.forEach(drawTree);
- buildings.forEach(drawBuilding);
+ for(let i=0;i<trees.length;i++)drawTree(trees[i]);
+ for(let i=0;i<buildings.length;i++)drawBuilding(buildings[i]);
  drawFountain();
 
  let day=daylight();
  drawLights(day);
  drawSmoke(dt);
- npcs.forEach(drawNPC);
+ for(let i=0;i<npcs.length;i++)drawNPC(npcs[i]);
  drawPlayer();
  drawAtmosphere(day);
 
@@ -612,13 +615,22 @@ function draw(dt){
  }
 }
 
+/* محدود کردن نرخ فریم برای کاهش فشار گوشی */
 let last=performance.now();
+let lastRender=0;
+const FRAME_INTERVAL=1000/45;
+
 function loop(now){
- let dt=Math.min(2,(now-last)/16.67);
+ requestAnimationFrame(loop);
+ if(now-lastRender<FRAME_INTERVAL)return;
+
+ let elapsed=Math.min(50,now-last);
+ let dt=elapsed/16.67;
  last=now;
+ lastRender=now;
+
  update(dt);
  draw(dt);
- requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 </script>
