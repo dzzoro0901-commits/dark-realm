@@ -96,22 +96,18 @@ const world={w:2800,h:2300};
 const player={x:1150,y:890,speed:2.5,direction:'down',moving:false,frame:0};
 let keys={},joy={x:0,y:0},running=false,near=null;
 
-/* ساختمان‌ها؛ چیدمان منظم در محله‌ها */
 const buildings=[
  {x:650,y:350,w:220,h:170,name:'خانه',chimney:true},
  {x:1400,y:350,w:240,h:190,name:'مغازه',chimney:true},
  {x:2200,y:350,w:250,h:190,name:'مسافرخانه',chimney:true},
-
  {x:650,y:1050,w:230,h:180,name:'خانه',chimney:true},
  {x:1400,y:1050,w:250,h:200,name:'خانه',chimney:true},
  {x:2200,y:1050,w:220,h:180,name:'خانه قدیمی',chimney:true},
-
  {x:650,y:1740,w:230,h:180,name:'خانه جنگلی',chimney:true},
  {x:1400,y:1740,w:250,h:190,name:'کلبه',chimney:true},
  {x:2200,y:1740,w:250,h:190,name:'خانه قدیمی',chimney:true}
 ];
 
-/* شبکه خیابان‌های متصل */
 const roads=[
  {x:0,y:820,w:2800,h:140},
  {x:0,y:1480,w:2800,h:140},
@@ -184,9 +180,9 @@ function safeTree(x,y,s){
  return true;
 }
 
-/* تعداد درخت‌ها کمتر و پخش طبیعی‌تر */
+/* تعداد درخت‌ها کمی کاهش پیدا کرد */
 const trees=[];
-for(let i=0;i<115;i++){
+for(let i=0;i<95;i++){
  for(let a=0;a<100;a++){
   let x=40+Math.random()*(world.w-80);
   let y=40+Math.random()*(world.h-80);
@@ -256,7 +252,6 @@ document.getElementById('closeSettings').onclick=()=>{
  settingsPanel.style.display='none';
 };
 
-/* صدا */
 let audioCtx=null,masterGain=null,windGain=null;
 let soundEnabled=true,audioStarted=false,birdTimer=null;
 
@@ -365,7 +360,7 @@ function circle(x,y,r,c){
  ctx.arc(x-camX,y-camY,r,0,Math.PI*2);ctx.fill();
 }
 
-/* زمین و جاده‌ها */
+/* زمین و جاده‌های یکپارچه */
 function drawGround(){
  rect(0,0,world.w,world.h,'#29382f');
 
@@ -375,34 +370,39 @@ function drawGround(){
   }
  }
 
+ /* ابتدا حاشیه تمام جاده‌ها رسم می‌شود */
  roads.forEach(r=>{
   rect(r.x-9,r.y-9,r.w+18,r.h+18,'#403a32');
+ });
+
+ /* سپس سطح جاده‌ها؛ این ترتیب اتصال‌ها را یکدست می‌کند */
+ roads.forEach(r=>{
   rect(r.x,r.y,r.w,r.h,'#655747');
  });
 
- // سنگ‌فرش یکدست و منظم
+ /* سنگ‌فرش با شبکه مشترک روی کل مسیرها */
+ ctx.save();
+ ctx.beginPath();
  roads.forEach(r=>{
-  const horizontal=r.w>=r.h;
-  if(horizontal){
-   for(let y=r.y+8;y<r.y+r.h-5;y+=34){
-    for(let x=r.x+8;x<r.x+r.w-5;x+=42){
-     let offset=(Math.floor((y-r.y)/34)%2)*20;
-     rect(x+offset,y,28,22,'#796a57');
-     rect(x+offset+29,y,3,22,'#51483c');
-    }
-   }
-  }else{
-   for(let x=r.x+8;x<r.x+r.w-5;x+=34){
-    for(let y=r.y+8;y<r.y+r.h-5;y+=42){
-     let offset=(Math.floor((x-r.x)/34)%2)*20;
-     rect(x,y+offset,22,28,'#796a57');
-     rect(x,y+offset+29,22,3,'#51483c');
-    }
-   }
-  }
+  ctx.rect(r.x-camX,r.y-camY,r.w,r.h);
  });
+ ctx.clip();
 
- // میدان مرکزی؛ دقیقاً وسط چهارراه
+ const tileW=40,tileH=32;
+ const startX=Math.floor((camX-80)/tileW)*tileW;
+ const endX=camX+W+tileW;
+ const startY=Math.floor((camY-80)/tileH)*tileH;
+ const endY=camY+H+tileH;
+
+ for(let y=startY;y<endY;y+=tileH){
+  for(let x=startX;x<endX;x+=tileW){
+   rect(x+2,y+2,tileW-4,tileH-4,'#796a57');
+   rect(x+tileW-2,y+2,2,tileH-4,'#51483c');
+  }
+ }
+ ctx.restore();
+
+ /* میدان مرکزی؛ دقیقاً وسط چهارراه */
  circle(1150,890,100,'#746653');
  circle(1150,890,86,'#665747');
  circle(1150,890,70,'#796a57');
@@ -440,7 +440,6 @@ function drawBuilding(b){
  ctx.fillText(b.name,b.x+b.w/2-camX,b.y-30-camY);
 }
 
-/* آب‌نما در مرکز دقیق چهارراه */
 function drawFountain(){
  const x=1150,y=890;
  circle(x,y,65,'#4d5147');
@@ -514,7 +513,6 @@ function moveNPC(n,dt){
  }
 }
 
-/* ساعت و نور */
 let gameTime=0;
 const dayLength=240;
 let smoke=[];
