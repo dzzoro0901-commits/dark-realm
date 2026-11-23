@@ -3,7 +3,7 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>DARK REALM</title>
 <style>
 *{box-sizing:border-box}
@@ -19,7 +19,7 @@ canvas{display:block;width:100vw;height:100vh}
 #stick{width:120px;height:120px;border:2px solid #ffffff66;background:#ffffff20;border-radius:50%;position:relative;touch-action:none}
 #nub{position:absolute;left:35px;top:35px;width:46px;height:46px;border-radius:50%;background:#c5cbd377;border:2px solid #fff;pointer-events:none}
 #buttons{display:flex;gap:12px;align-items:end}
-.action{border-radius:50%;background:#70552f;border:2px solid #e0bd7c;color:white;font-weight:bold;touch-action:none;user-select:none}
+.action{border-radius:50%;background:#70552f;border:2px solid #e0bd7c;color:white;font-weight:bold;touch-action:none;user-select:none;-webkit-user-select:none}
 #run{width:65px;height:65px;font-size:12px}
 #talk{width:75px;height:75px;font-size:13px}
 #dialog{display:none;position:absolute;bottom:125px;left:5%;width:90%;background:#101827f2;border:1px solid #d0ae70;border-radius:14px;padding:16px;text-align:center;line-height:1.8;pointer-events:auto}
@@ -28,9 +28,9 @@ canvas{display:block;width:100vw;height:100vh}
 .card{background:#131d2c;border:1px solid #a88e5d;border-radius:20px;padding:28px;max-width:420px}
 h1{color:#d6bd8a;letter-spacing:3px}
 p{font-size:13px;line-height:2;color:#c4cbd4}
-#play{background:#9a7947;color:white;border:0;border-radius:12px;padding:14px 35px;font-size:15px;font-weight:bold}
+#play{background:#9a7947;color:white;border:0;border-radius:12px;padding:14px 35px;font-size:15px;font-weight:bold;touch-action:manipulation}
 #settingsBtn{position:absolute;top:160px;left:12px;width:46px;height:46px;border:1px solid #d0ae70;border-radius:13px;background:#101827ed;color:#e3c78f;font-size:25px;pointer-events:auto}
-#settingsPanel{display:none;position:absolute;top:214px;left:12px;width:210px;background:#101827f5;border:1px solid #9b895d;border-radius:14px;padding:14px;pointer-events:auto}
+#settingsPanel{display:none;position:absolute;top:214px;left:12px;width:210px;background:#101827f5;border:1px solid #9b895d;border-radius:14px;padding:14px;pointer-events:auto;box-shadow:0 8px 25px #0008}
 #settingsPanel button{background:#70552f;color:white;border:1px solid #d0ae70;border-radius:8px;padding:9px;font-family:Tahoma}
 #volume{width:100%;accent-color:#d0ae70}
 .settingsTitle{color:#e3c78f;font-weight:bold;margin-bottom:14px}
@@ -78,41 +78,40 @@ p{font-size:13px;line-height:2;color:#c4cbd4}
 
 <script>
 const canvas=document.getElementById('game');
-const ctx=canvas.getContext('2d',{alpha:false});
+const ctx=canvas.getContext('2d');
 let W=innerWidth,H=innerHeight,camX=0,camY=0,started=false;
 
-/* تنظیم کیفیت برای گوشی */
-let DPR=1;
-
 function resize(){
- W=innerWidth;
- H=innerHeight;
- DPR=Math.min(window.devicePixelRatio||1,1);
- canvas.width=Math.round(W*DPR);
- canvas.height=Math.round(H*DPR);
+ W=innerWidth;H=innerHeight;
+ canvas.width=W*devicePixelRatio;
+ canvas.height=H*devicePixelRatio;
  canvas.style.width=W+'px';
  canvas.style.height=H+'px';
- ctx.setTransform(DPR,0,0,DPR,0,0);
+ ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
 }
 addEventListener('resize',resize);
 resize();
 
 const world={w:2800,h:2300};
-const player={x:1150,y:890,speed:2.5,direction:'down',moving:false,frame:0};
+const player={x:1100,y:900,speed:2.5,direction:'down',moving:false,frame:0};
 let keys={},joy={x:0,y:0},running=false,near=null;
 
+/* ساختمان‌ها؛ چیدمان منظم در محله‌ها */
 const buildings=[
  {x:650,y:350,w:220,h:170,name:'خانه',chimney:true},
  {x:1400,y:350,w:240,h:190,name:'مغازه',chimney:true},
  {x:2200,y:350,w:250,h:190,name:'مسافرخانه',chimney:true},
+
  {x:650,y:1050,w:230,h:180,name:'خانه',chimney:true},
  {x:1400,y:1050,w:250,h:200,name:'خانه',chimney:true},
  {x:2200,y:1050,w:220,h:180,name:'خانه قدیمی',chimney:true},
+
  {x:650,y:1740,w:230,h:180,name:'خانه جنگلی',chimney:true},
  {x:1400,y:1740,w:250,h:190,name:'کلبه',chimney:true},
  {x:2200,y:1740,w:250,h:190,name:'خانه قدیمی',chimney:true}
 ];
 
+/* شبکه خیابان‌های متصل */
 const roads=[
  {x:0,y:820,w:2800,h:140},
  {x:0,y:1480,w:2800,h:140},
@@ -122,22 +121,60 @@ const roads=[
  {x:2580,y:0,w:120,h:2300}
 ];
 
-const buildingZones=buildings.map(b=>({x:b.x-35,y:b.y-35,w:b.w+70,h:b.h+70}));
-const fountainZone={x:1080,y:820,w:140,h:140};
+const buildingZones=buildings.map(b=>({
+ x:b.x-35,y:b.y-35,w:b.w+70,h:b.h+70
+}));
+const fountainZone={x:1030,y:830,w:140,h:140};
 
 const npcs=[
- {x:1100,y:690,name:'مامان ادریس',msg:'با کونم از همه محافظت میکنم',color:'#9b5968',route:[{x:1100,y:690},{x:1120,y:790},{x:1180,y:900},{x:1080,y:900},{x:1030,y:760}]},
- {x:820,y:980,name:'ویچر',msg:'سلام مسافر! هرچی بخوای شاید توی مغازه پیدا بشه، البته قیمت‌ها رو خودم تعیین میکنم!',color:'#536c49',route:[{x:820,y:980},{x:760,y:980},{x:650,y:900},{x:760,y:850},{x:900,y:900}]},
- {x:1430,y:1000,name:'زئوس',msg:'دنبال معامله‌ای؟ من آدم مناسبی برای هر کاری هستم... البته پولت رو اول نشون بده.',color:'#80649b',route:[{x:1430,y:1000},{x:1510,y:950},{x:1550,y:850},{x:1450,y:800},{x:1400,y:900}]},
- {x:1100,y:1200,name:'تانجیرو',msg:'نگران نباش! تا وقتی من اینجام، اجازه نمیدم کسی به شهر آسیب بزنه.',color:'#365c75',route:[{x:1100,y:1200},{x:1180,y:1100},{x:1250,y:1000},{x:1180,y:950},{x:1100,y:1050}]},
- {x:900,y:700,name:'یاشار',msg:'من فقط یه شهروند عادی هستم... چیزی ندیدی، چیزی نشنیدی.',color:'#333b49',route:[{x:900,y:700},{x:850,y:750},{x:800,y:800},{x:900,y:850},{x:950,y:750}]},
- {x:1600,y:850,name:'اراد',msg:'سلام مسافر. من ارادم؛ این شهر پر از رازهای پنهانه. همیشه چشم‌هات رو باز نگه دار، چون بعضی اتفاق‌ها فقط یک‌بار رخ می‌دن...',color:'#242735',route:[{x:1600,y:850},{x:1650,y:900},{x:1700,y:950},{x:1600,y:1000},{x:1550,y:900}]},
- {x:2050,y:1740,name:'ممد اسموک',msg:'اوه... سلام رفیق. من ممد اسموکم. راستش یه مدته درگیر یه عادت بد شدم و کنار گذاشتنش برام آسون نیست. بعضی روزا حسابی گیجم... ولی دارم سعی می‌کنم اوضاعمو درست کنم. فکر کنم وقتشه از یکی کمک بگیرم.',color:'#292b32',route:[{x:2050,y:1740},{x:2110,y:1770},{x:2180,y:1740},{x:2200,y:1820},{x:2130,y:1860},{x:2050,y:1810}]}
+ {
+  x:1100,y:690,name:'مامان ادریس',
+  msg:'با کونم از همه محافظت میکنم',
+  color:'#9b5968',
+  route:[{x:1100,y:690},{x:1120,y:790},{x:1180,y:900},{x:1080,y:900},{x:1030,y:760}]
+ },
+ {
+  x:820,y:980,name:'ویچر',
+  msg:'سلام مسافر! هرچی بخوای شاید توی مغازه پیدا بشه، البته قیمت‌ها رو خودم تعیین میکنم!',
+  color:'#536c49',
+  route:[{x:820,y:980},{x:760,y:980},{x:650,y:900},{x:760,y:850},{x:900,y:900}]
+ },
+ {
+  x:1430,y:1000,name:'زئوس',
+  msg:'دنبال معامله‌ای؟ من آدم مناسبی برای هر کاری هستم... البته پولت رو اول نشون بده.',
+  color:'#80649b',
+  route:[{x:1430,y:1000},{x:1510,y:950},{x:1550,y:850},{x:1450,y:800},{x:1400,y:900}]
+ },
+ {
+  x:1100,y:1200,name:'تانجیرو',
+  msg:'نگران نباش! تا وقتی من اینجام، اجازه نمیدم کسی به شهر آسیب بزنه.',
+  color:'#365c75',
+  route:[{x:1100,y:1200},{x:1180,y:1100},{x:1250,y:1000},{x:1180,y:950},{x:1100,y:1050}]
+ },
+ {
+  x:900,y:700,name:'یاشار',
+  msg:'من فقط یه شهروند عادی هستم... چیزی ندیدی، چیزی نشنیدی.',
+  color:'#333b49',
+  route:[{x:900,y:700},{x:850,y:750},{x:800,y:800},{x:900,y:850},{x:950,y:750}]
+ },
+ {
+  x:1600,y:850,name:'اراد',
+  msg:'سلام مسافر. من ارادم؛ این شهر پر از رازهای پنهانه. همیشه چشم‌هات رو باز نگه دار، چون بعضی اتفاق‌ها فقط یک‌بار رخ می‌دن...',
+  color:'#242735',
+  route:[{x:1600,y:850},{x:1650,y:900},{x:1700,y:950},{x:1600,y:1000},{x:1550,y:900}]
+ },
+ {
+  x:2050,y:1740,name:'ممد اسموک',
+  msg:'اوه... سلام رفیق. من ممد اسموکم. راستش یه مدته درگیر یه عادت بد شدم و کنار گذاشتنش برام آسون نیست. بعضی روزا حسابی گیجم... ولی دارم سعی می‌کنم اوضاعمو درست کنم. فکر کنم وقتشه از یکی کمک بگیرم.',
+  color:'#292b32',
+  route:[{x:2050,y:1740},{x:2110,y:1770},{x:2180,y:1740},{x:2200,y:1820},{x:2130,y:1860},{x:2050,y:1810}]
+ }
 ];
 
 function overlaps(a,b){
  return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 }
+
 function safeTree(x,y,s){
  const box={x:x-s,y:y-s,w:s*2,h:s*2};
  if(buildingZones.some(b=>overlaps(box,b)))return false;
@@ -147,19 +184,25 @@ function safeTree(x,y,s){
  return true;
 }
 
+/* تعداد درخت‌ها کمتر و پخش طبیعی‌تر */
 const trees=[];
-for(let i=0;i<65;i++){
- for(let a=0;a<70;a++){
+for(let i=0;i<115;i++){
+ for(let a=0;a<100;a++){
   let x=40+Math.random()*(world.w-80);
   let y=40+Math.random()*(world.h-80);
   let size=18+Math.random()*14;
-  if(safeTree(x,y,size)){trees.push({x,y,size});break;}
+  if(safeTree(x,y,size)){
+   trees.push({x,y,size});
+   break;
+  }
  }
 }
 
 const obstacles=[];
 buildings.forEach(b=>obstacles.push({x:b.x+8,y:b.y+20,w:b.w-16,h:b.h-20}));
-trees.forEach(t=>obstacles.push({x:t.x-t.size*.55,y:t.y-t.size*.5,w:t.size*1.1,h:t.size*1.1}));
+trees.forEach(t=>obstacles.push({
+ x:t.x-t.size*.55,y:t.y-t.size*.5,w:t.size*1.1,h:t.size*1.1
+}));
 
 addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;});
 addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
@@ -209,8 +252,11 @@ const soundBtn=document.getElementById('soundBtn');
 settingsBtn.onclick=()=>{
  settingsPanel.style.display=settingsPanel.style.display==='block'?'none':'block';
 };
-document.getElementById('closeSettings').onclick=()=>settingsPanel.style.display='none';
+document.getElementById('closeSettings').onclick=()=>{
+ settingsPanel.style.display='none';
+};
 
+/* صدا */
 let audioCtx=null,masterGain=null,windGain=null;
 let soundEnabled=true,audioStarted=false,birdTimer=null;
 
@@ -263,8 +309,10 @@ function birdChirp(){
  const osc=audioCtx.createOscillator();
  const gain=audioCtx.createGain();
  const filter=audioCtx.createBiquadFilter();
- osc.type='sine';filter.type='bandpass';
- filter.frequency.value=2600;filter.Q.value=1.2;
+ osc.type='sine';
+ filter.type='bandpass';
+ filter.frequency.value=2600;
+ filter.Q.value=1.2;
  const base=2200+Math.random()*500;
  const duration=.16+Math.random()*.12;
  osc.frequency.setValueAtTime(base,now);
@@ -276,9 +324,12 @@ function birdChirp(){
  osc.connect(filter);filter.connect(gain);gain.connect(masterGain);
  osc.start(now);osc.stop(now+duration+.02);
 }
+
 function birdSound(){
  birdChirp();
- if(Math.random()<.45)setTimeout(()=>{if(soundEnabled&&started&&audioCtx)birdChirp();},180+Math.random()*180);
+ if(Math.random()<.45){
+  setTimeout(()=>{if(soundEnabled&&started&&audioCtx)birdChirp();},180+Math.random()*180);
+ }
 }
 function startBirds(){
  if(birdTimer)clearTimeout(birdTimer);
@@ -289,6 +340,7 @@ function startBirds(){
  }
  schedule();
 }
+
 soundBtn.onclick=()=>{
  soundEnabled=!soundEnabled;
  if(masterGain)masterGain.gain.setTargetAtTime(soundEnabled?volume.value/100:0,audioCtx.currentTime,.2);
@@ -312,62 +364,52 @@ function circle(x,y,r,c){
  ctx.fillStyle=c;ctx.beginPath();
  ctx.arc(x-camX,y-camY,r,0,Math.PI*2);ctx.fill();
 }
-function visible(x,y,w,h,margin=80){
- return x+w>camX-margin&&x<camX+W+margin&&y+h>camY-margin&&y<camY+H+margin;
-}
 
+/* زمین و جاده‌ها */
 function drawGround(){
- rect(camX,camY,W,H,'#29382f');
+ rect(0,0,world.w,world.h,'#29382f');
 
- const tile=80;
- const sx=Math.floor(camX/tile)*tile;
- const ex=camX+W+tile;
- const sy=Math.floor(camY/tile)*tile;
- const ey=camY+H+tile;
-
- for(let y=sy;y<ey;y+=tile){
-  for(let x=sx;x<ex;x+=tile){
-   if((x+y)%160===0)rect(x,y,tile,tile,'#2d3d32');
+ for(let y=0;y<world.h;y+=80){
+  for(let x=0;x<world.w;x+=80){
+   if((x+y)%160===0)rect(x,y,80,80,'#2d3d32');
   }
  }
 
  roads.forEach(r=>{
-  if(!visible(r.x-10,r.y-10,r.w+20,r.h+20))return;
   rect(r.x-9,r.y-9,r.w+18,r.h+18,'#403a32');
   rect(r.x,r.y,r.w,r.h,'#655747');
  });
 
- ctx.save();
- ctx.beginPath();
+ // سنگ‌فرش یکدست و منظم
  roads.forEach(r=>{
-  if(visible(r.x,r.y,r.w,r.h))ctx.rect(r.x-camX,r.y-camY,r.w,r.h);
- });
- ctx.clip();
-
- const tw=40,th=32;
- const startX=Math.floor((camX-40)/tw)*tw;
- const endX=camX+W+tw;
- const startY=Math.floor((camY-40)/th)*th;
- const endY=camY+H+th;
-
- for(let y=startY;y<endY;y+=th){
-  for(let x=startX;x<endX;x+=tw){
-   rect(x+2,y+2,tw-4,th-4,'#796a57');
-   rect(x+tw-2,y+2,2,th-4,'#51483c');
+  const horizontal=r.w>=r.h;
+  if(horizontal){
+   for(let y=r.y+8;y<r.y+r.h-5;y+=34){
+    for(let x=r.x+8;x<r.x+r.w-5;x+=42){
+     let offset=(Math.floor((y-r.y)/34)%2)*20;
+     rect(x+offset,y,28,22,'#796a57');
+     rect(x+offset+29,y,3,22,'#51483c');
+    }
+   }
+  }else{
+   for(let x=r.x+8;x<r.x+r.w-5;x+=34){
+    for(let y=r.y+8;y<r.y+r.h-5;y+=42){
+     let offset=(Math.floor((x-r.x)/34)%2)*20;
+     rect(x,y+offset,22,28,'#796a57');
+     rect(x,y+offset+29,22,3,'#51483c');
+    }
+   }
   }
- }
- ctx.restore();
+ });
 
- if(visible(1050,790,200,200)){
-  circle(1150,890,100,'#746653');
-  circle(1150,890,86,'#665747');
-  circle(1150,890,70,'#796a57');
- }
+ // میدان مرکزی
+ circle(1100,900,100,'#746653');
+ circle(1100,900,86,'#665747');
+ circle(1100,900,70,'#796a57');
 }
 
 function drawTree(t){
  let{x,y,size:s}=t;
- if(!visible(x-s-5,y-s-5,s*2+10,s*2+25))return;
  circle(x+6,y+13,s,'#17241c');
  rect(x-5,y-3,10,25,'#5a402d');
  circle(x,y-15,s,'#1b3022');
@@ -378,7 +420,6 @@ function drawTree(t){
 }
 
 function drawBuilding(b){
- if(!visible(b.x-20,b.y-45,b.w+40,b.h+55))return;
  rect(b.x+10,b.y+12,b.w,b.h,'#171b1c');
  rect(b.x,b.y,b.w,b.h,'#665548');
  for(let i=0;i<5;i++)rect(b.x+8,b.y+30+i*27,b.w-16,2,'#81705d');
@@ -394,23 +435,61 @@ function drawBuilding(b){
   rect(b.x+b.w-48,b.y-32,25,40,'#59463a');
   rect(b.x+b.w-53,b.y-36,35,9,'#392b26');
  }
- ctx.fillStyle='#d3c1a0';ctx.font='11px Tahoma';ctx.textAlign='center';
+ ctx.fillStyle='#d3c1a0';
+ ctx.font='11px Tahoma';ctx.textAlign='center';
  ctx.fillText(b.name,b.x+b.w/2-camX,b.y-30-camY);
 }
 
+/* آب‌نمای متقارن */
 function drawFountain(){
- if(!visible(1070,810,160,160))return;
- const x=1150,y=890;
+ const x=1100,y=900;
+
+ // سایه و لبه بیرونی
+ circle(x+4,y+7,74,'#202820');
+ circle(x,y,72,'#92816b');
  circle(x,y,65,'#4d5147');
- circle(x,y,48,'#77705b');
- circle(x,y,36,'#3c5658');
- circle(x,y,12,'#9a8a66');
- circle(x,y,70,'#92816b');
- circle(x,y,62,'#4d5147');
+
+ // حوض سنگی
+ circle(x,y,57,'#77705b');
+ circle(x,y,48,'#3c5658');
+
+ // حلقه داخلی
+ circle(x,y,39,'#8b8069');
+ circle(x,y,33,'#42666a');
+
+ // پایه مرکزی
+ circle(x,y,17,'#74634d');
+ circle(x,y,12,'#b39a6b');
+ circle(x,y,7,'#d0b77d');
+
+ // چهار خروجی کاملاً متقارن
+ const jets=[
+  [0,-27],[27,0],[0,27],[-27,0]
+ ];
+
+ jets.forEach(([dx,dy])=>{
+  circle(x+dx,y+dy,4,'#a6d0cb');
+  circle(x+dx,y+dy,2,'#d2e9dc');
+ });
+
+ // چهار حلقه موج متقارن
+ ctx.strokeStyle='#a6c8bd';
+ ctx.lineWidth=2;
+
+ jets.forEach(([dx,dy])=>{
+  ctx.beginPath();
+  ctx.arc(
+   x+dx-camX,
+   y+dy-camY,
+   7,
+   0,
+   Math.PI*2
+  );
+  ctx.stroke();
+ });
 }
 
 function drawNPC(n){
- if(!visible(n.x-30,n.y-55,60,90))return;
  let walk=n.walk||0;
  let step=n.moving?Math.sin(walk)*3:0;
  circle(n.x,n.y+10,11,'#111');
@@ -420,7 +499,8 @@ function drawNPC(n){
  rect(n.x-8,n.y+8,16,20,n.color||'#7c5360');
  rect(n.x-13,n.y+10,4,12,'#c49a78');
  rect(n.x+9,n.y+10,4,12,'#c49a78');
- ctx.fillStyle='#f3dca5';ctx.font='12px Tahoma';ctx.textAlign='center';
+ ctx.fillStyle='#f3dca5';
+ ctx.font='12px Tahoma';ctx.textAlign='center';
  ctx.fillText(n.name,n.x-camX,n.y-28-camY);
  if(Math.hypot(player.x-n.x,player.y-n.y)<85){
   ctx.fillStyle='#fff';ctx.font='12px Tahoma';
@@ -448,11 +528,7 @@ function drawPlayer(){
 
 function collide(x,y){
  let r=12;
- for(let i=0;i<obstacles.length;i++){
-  let o=obstacles[i];
-  if(x+r>o.x&&x-r<o.x+o.w&&y+r>o.y&&y-r<o.y+o.h)return true;
- }
- return false;
+ return obstacles.some(o=>x+r>o.x&&x-r<o.x+o.w&&y+r>o.y&&y-r<o.y+o.h);
 }
 
 function moveNPC(n,dt){
@@ -476,11 +552,12 @@ function moveNPC(n,dt){
  }
 }
 
+/* ساعت و نور */
 let gameTime=0;
 const dayLength=240;
 let smoke=[];
-for(let i=0;i<18;i++){
- smoke.push({r:3+Math.random()*5,life:Math.random(),speed:.2+Math.random()*.35,drift:Math.random()*2-1});
+for(let i=0;i<40;i++){
+ smoke.push({x:0,y:0,r:3+Math.random()*6,life:Math.random(),speed:.2+Math.random()*.35,drift:Math.random()*2-1});
 }
 
 function getGameClock(){
@@ -499,50 +576,60 @@ function getPhase(){
 
 function drawLights(day){
  let darkness=1-day;
- if(darkness>.35){
-  buildings.forEach(b=>{
-   if(!visible(b.x,b.y,b.w,b.h))return;
+ buildings.forEach(b=>{
+  let wx=b.x+28,wy=b.y+58;
+  let grd=ctx.createRadialGradient(wx-camX,wy-camY,2,wx-camX,wy-camY,80);
+  grd.addColorStop(0,`rgba(255,190,90,${darkness*.5})`);
+  grd.addColorStop(1,'rgba(255,190,90,0)');
+  ctx.fillStyle=grd;
+  ctx.fillRect(wx-80-camX,wy-80-camY,160,160);
+  if(darkness>.35){
    rect(b.x+28,b.y+58,29,39,`rgba(255,190,90,${darkness*.75})`);
    rect(b.x+b.w-57,b.y+58,29,39,`rgba(255,190,90,${darkness*.75})`);
-  });
- }
+  }
+ });
  const lamps=[
   [500,800],[900,800],[1300,800],[1700,800],[2300,800],
   [1000,600],[1200,600],[1000,1100],[1200,1100],
   [500,1500],[1000,1500],[1500,1500],[2000,1500],[2500,1500],
   [500,1900],[1100,1900],[1900,1900],[2600,1900]
  ];
- for(let i=0;i<lamps.length;i++){
-  let x=lamps[i][0],y=lamps[i][1];
-  if(visible(x-8,y-8,16,16))circle(x,y,5,'#c6a56b');
- }
+ lamps.forEach(([x,y])=>{
+  circle(x,y,5,'#c6a56b');
+  if(darkness>.25){
+   let g=ctx.createRadialGradient(x-camX,y-camY,2,x-camX,y-camY,65);
+   g.addColorStop(0,`rgba(255,205,120,${darkness*.45})`);
+   g.addColorStop(1,'rgba(255,205,120,0)');
+   ctx.fillStyle=g;ctx.fillRect(x-65-camX,y-65-camY,130,130);
+  }
+ });
 }
 
 function drawSmoke(dt){
- buildings.forEach((b,index)=>{
-  if(!b.chimney||!visible(b.x+b.w-80,b.y-120,100,100))return;
+ buildings.filter(b=>b.chimney).forEach(b=>{
   let x=b.x+b.w-35,y=b.y-36;
-  for(let i=0;i<2;i++){
-   let p=smoke[(index*2+i)%smoke.length];
-   p.life+=dt*p.speed*.004;
+  for(let i=0;i<8;i++){
+   let p=smoke[(buildings.indexOf(b)*8+i)%smoke.length];
+   p.life+=dt*p.speed*.006;
    if(p.life>1)p.life=0;
-   let sway=Math.sin(gameTime+p.life*5)*7;
-   circle(x+sway+p.drift*p.life*12,y-p.life*55,p.r*(.5+p.life),`rgba(190,195,190,${.12*(1-p.life)})`);
+   let sway=Math.sin(gameTime*1.5+p.life*8)*12;
+   let sx=x+sway+p.drift*p.life*20;
+   let sy=y-p.life*70;
+   let alpha=.18*(1-p.life);
+   circle(sx,sy,p.r*(.5+p.life),`rgba(190,195,190,${alpha})`);
   }
  });
 }
 
 function drawAtmosphere(day){
  let darkness=1-day;
- if(darkness>.01){
-  ctx.fillStyle=`rgba(9,18,38,${darkness*.58})`;
-  ctx.fillRect(0,0,W,H);
- }
+ ctx.fillStyle=`rgba(9,18,38,${darkness*.58})`;
+ ctx.fillRect(0,0,W,H);
  let clock=getGameClock(),orange=0;
  if(clock.hour>=5&&clock.hour<8)orange=1-(clock.hour-5)/3;
  if(clock.hour>=17&&clock.hour<20)orange=(clock.hour-17)/3;
  orange=Math.max(0,Math.min(1,orange));
- if(orange>.01){
+ if(orange>0){
   ctx.fillStyle=`rgba(180,95,40,${orange*.09})`;
   ctx.fillRect(0,0,W,H);
  }
@@ -591,46 +678,29 @@ function interact(){
 }
 document.getElementById('talk').addEventListener('click',interact);
 
-let uiCounter=0;
 function draw(dt){
  ctx.clearRect(0,0,W,H);
  drawGround();
-
- for(let i=0;i<trees.length;i++)drawTree(trees[i]);
- for(let i=0;i<buildings.length;i++)drawBuilding(buildings[i]);
+ trees.forEach(drawTree);
+ buildings.forEach(drawBuilding);
  drawFountain();
-
  let day=daylight();
  drawLights(day);
  drawSmoke(dt);
- for(let i=0;i<npcs.length;i++)drawNPC(npcs[i]);
+ npcs.forEach(drawNPC);
  drawPlayer();
  drawAtmosphere(day);
-
- uiCounter++;
- if(uiCounter>=10){
-  uiCounter=0;
-  let clock=getGameClock();
-  document.getElementById('stats').innerHTML='❤️ 100<br>🪙 25<br>'+getPhase()+'<br>🕐 '+clock.text;
- }
+ let clock=getGameClock();
+ document.getElementById('stats').innerHTML='❤️ 100<br>🪙 25<br>'+getPhase()+'<br>🕐 '+clock.text;
 }
 
-/* محدود کردن نرخ فریم برای کاهش فشار گوشی */
 let last=performance.now();
-let lastRender=0;
-const FRAME_INTERVAL=1000/45;
-
 function loop(now){
- requestAnimationFrame(loop);
- if(now-lastRender<FRAME_INTERVAL)return;
-
- let elapsed=Math.min(50,now-last);
- let dt=elapsed/16.67;
+ let dt=Math.min(2,(now-last)/16.67);
  last=now;
- lastRender=now;
-
  update(dt);
  draw(dt);
+ requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 </script>
