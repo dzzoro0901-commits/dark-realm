@@ -235,7 +235,10 @@ function spawnSlime(){
   if(!collide(x,y)&&Math.hypot(x-player.x,y-player.y)>230)break;
   x=s[0]+Math.random()*s[2];y=s[1]+Math.random()*s[3];
  }
- enemies.push({x,y,hp:35,maxHp:35,alive:true,phase:Math.random()*6,hit:0});
+ enemies.push({
+  x,y,hp:35,maxHp:35,alive:true,
+  phase:Math.random()*6,hit:0,touching:false
+ });
 }
 for(let i=0;i<5;i++)spawnSlime();
 
@@ -311,21 +314,37 @@ function drawGround(){
  const sx=Math.max(0,Math.floor((camX-80)/80)*80),ex=Math.min(world.w,camX+W+80);
  const sy=Math.max(0,Math.floor((camY-80)/80)*80),ey=Math.min(world.h,camY+H+80);
  for(let y=sy;y<ey;y+=80)for(let x=sx;x<ex;x+=80)if((x+y)%160===0)rect(x,y,80,80,'#2d3d32');
+
  roads.forEach(r=>{
   if(!visible(r.x,r.y,r.w,r.h))return;
-  rect(r.x-9,r.y-9,r.w+18,r.h+18,'#403a32');rect(r.x,r.y,r.w,r.h,'#655747');
+  rect(r.x-9,r.y-9,r.w+18,r.h+18,'#403a32');
+  rect(r.x,r.y,r.w,r.h,'#655747');
+
   if(r.w>=r.h){
-   for(let y=Math.max(r.y+8,camY-40);y<Math.min(r.y+r.h,camY+H+40);y+=34)
-    for(let x=Math.max(r.x+8,camX-40);x<Math.min(r.x+r.w,camX+W+40);x+=42){
-     rect(x,y,28,22,'#796a57');rect(x+29,y,3,22,'#51483c');
+   const x0=r.x+8,y0=r.y+8;
+   const startX=x0+Math.ceil((Math.max(r.x+8,camX-40)-x0)/42)*42;
+   const startY=y0+Math.ceil((Math.max(r.y+8,camY-40)-y0)/34)*34;
+
+   for(let y=startY;y<Math.min(r.y+r.h,camY+H+40);y+=34){
+    for(let x=startX;x<Math.min(r.x+r.w,camX+W+40);x+=42){
+     rect(x,y,28,22,'#796a57');
+     rect(x+29,y,3,22,'#51483c');
     }
+   }
   }else{
-   for(let x=Math.max(r.x+8,camX-40);x<Math.min(r.x+r.w,camX+W+40);x+=34)
-    for(let y=Math.max(r.y+8,camY-40);y<Math.min(r.y+r.h,camY+H+40);y+=42){
-     rect(x,y,22,28,'#796a57');rect(x,y+29,22,3,'#51483c');
+   const x0=r.x+8,y0=r.y+8;
+   const startX=x0+Math.ceil((Math.max(r.x+8,camX-40)-x0)/34)*34;
+   const startY=y0+Math.ceil((Math.max(r.y+8,camY-40)-y0)/42)*42;
+
+   for(let x=startX;x<Math.min(r.x+r.w,camX+W+40);x+=34){
+    for(let y=startY;y<Math.min(r.y+r.h,camY+H+40);y+=42){
+     rect(x,y,22,28,'#796a57');
+     rect(x,y+29,22,3,'#51483c');
     }
+   }
   }
  });
+
  circle(1150,890,100,'#746653');circle(1150,890,86,'#665747');
  circle(1150,890,70,'#796a57');circle(1150,890,36,'#3c5658');
  circle(1150,890,12,'#9a8a66');
@@ -463,13 +482,23 @@ function updateCombat(dt){
    let nx=e.x+dx*.35*dt,ny=e.y+dy*.35*dt;
    if(!collide(nx,ny)){e.x=nx;e.y=ny;}
   }
-  if(d<25&&Math.random()<.012*dt){
-   game.health=Math.max(0,game.health-3);
-   tone(100,.1,'sine',.025);
+
+  // هر برخورد جدید با اسلایم، ۳۰ واحد سلامتی کم می‌کند.
+  if(d<25&&!e.touching){
+   e.touching=true;
+   game.health=Math.max(0,game.health-30);
+   tone(100,.15,'sine',.04);
+   saveGame();
+
    if(game.health<=0){
-    game.health=50;player.x=1150;player.y=890;
+    game.health=50;
+    player.x=1150;
+    player.y=890;
+    e.touching=false;
     notify('استراحت اضطراری','به میدان شهر برگشتی و سلامتی‌ات به ۵۰ رسید.');
    }
+  }else if(d>35){
+   e.touching=false;
   }
  });
  if(enemies.filter(e=>e.alive).length<5&&Math.random()<.002*dt)spawnSlime();
@@ -497,7 +526,7 @@ function drawLighting(){
  ctx.fillStyle=`rgba(9,18,38,${darkness*.48})`;ctx.fillRect(0,0,W,H);
 }
 function drawMinimap(){
- const mw=115,mh=86,x=W-mw-10,y=H*.5-43;
+ const mw=115,mh=86,x=W-mw-10,y=92;
  ctx.fillStyle='#101827dd';ctx.fillRect(x,y,mw,mh);
  ctx.strokeStyle='#c0a16b';ctx.strokeRect(x,y,mw,mh);
  enemies.forEach(e=>{
