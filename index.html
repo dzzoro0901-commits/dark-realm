@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -13,8 +14,8 @@ canvas{display:block;width:100vw;height:100vh}
 .panel{background:#101827e8;border:1px solid #9b895d;border-radius:12px;padding:10px}
 #top{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;gap:8px}
 #title{font-size:17px;color:#d8bd83;font-weight:bold}
-#stats{font-size:12px;line-height:1.8;text-align:right}
-#hint{position:absolute;top:80px;left:50%;transform:translateX(-50%);background:#101827dd;padding:8px 12px;border-radius:20px;font-size:11px;white-space:nowrap}
+#stats{font-size:12px;line-height:1.8;text-align:right;min-width:120px}
+#hint{position:absolute;top:100px;left:50%;transform:translateX(-50%);background:#101827dd;padding:8px 12px;border-radius:20px;font-size:11px;white-space:nowrap}
 #controls{position:absolute;bottom:20px;left:18px;right:18px;display:flex;justify-content:space-between;align-items:end;pointer-events:auto}
 #stick{width:120px;height:120px;border:2px solid #ffffff66;background:#ffffff20;border-radius:50%;position:relative;touch-action:none}
 #nub{position:absolute;left:35px;top:35px;width:46px;height:46px;border-radius:50%;background:#c5cbd377;border:2px solid #fff;pointer-events:none}
@@ -29,25 +30,47 @@ canvas{display:block;width:100vw;height:100vh}
 h1{color:#d6bd8a;letter-spacing:3px}
 p{font-size:13px;line-height:2;color:#c4cbd4}
 #play{background:#9a7947;color:white;border:0;border-radius:12px;padding:14px 35px;font-size:15px;font-weight:bold;touch-action:manipulation}
+#soundPanel{
+ position:absolute;top:100px;left:12px;
+ display:flex;gap:6px;align-items:center;
+ pointer-events:auto;
+ background:#101827dd;border:1px solid #9b895d;
+ border-radius:12px;padding:8px;
+}
+#soundBtn{background:#70552f;border:1px solid #d0ae70;color:white;border-radius:8px;padding:7px;font-size:12px}
+#volume{width:75px;accent-color:#d0ae70}
 </style>
 </head>
 
 <body>
+
 <canvas id="game"></canvas>
 
 <div id="ui">
+
  <div id="top">
   <div class="panel">
    <div id="title">DARK REALM</div>
    <small>THE OLD TOWN</small>
   </div>
-  <div class="panel" id="stats">❤️ 100<br>🪙 25<br>🌤️ روز</div>
+
+  <div class="panel" id="stats">
+   ❤️ 100<br>
+   🪙 25<br>
+   🌅 08:00
+  </div>
+ </div>
+
+ <div id="soundPanel">
+  <button id="soundBtn">🔊 صدا</button>
+  <input id="volume" type="range" min="0" max="100" value="35">
  </div>
 
  <div id="hint">در شهر حرکت کن و با مردم صحبت کن</div>
 
  <div id="controls">
   <div id="stick"><div id="nub"></div></div>
+
   <div id="buttons">
    <button class="action" id="run">دویدن</button>
    <button class="action" id="talk">تعامل</button>
@@ -58,17 +81,21 @@ p{font-size:13px;line-height:2;color:#c4cbd4}
   <div id="who"></div>
   <div id="words"></div>
  </div>
+
 </div>
 
 <div id="start">
  <div class="card">
   <h1>DARK REALM</h1>
   <div style="color:#b9a47c">THE OLD TOWN</div>
+
   <p>
    به شهر قدیمی خوش آمدی.<br>
    در کوچه‌ها بگرد، با مردم شهر حرف بزن و رازهای این سرزمین را کشف کن.
   </p>
+
   <button id="play">شروع ماجراجویی</button>
+
   <p>نسخه آزمایشی آفلاین</p>
  </div>
 </div>
@@ -88,6 +115,7 @@ function resize(){
  canvas.style.height=H+'px';
  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
 }
+
 addEventListener('resize',resize);
 resize();
 
@@ -102,7 +130,7 @@ let keys={},joy={x:0,y:0},running=false,near=null;
 
 const buildings=[
  {x:620,y:430,w:220,h:170,name:'خانه',chimney:true},
- {x:1370,y:420,w:240,h:190,name:'مغازه'},
+ {x:1370,y:420,w:240,h:190,name:'مغازه',chimney:true},
  {x:480,y:1150,w:230,h:180,name:'خانه',chimney:true},
  {x:1510,y:1170,w:250,h:200,name:'خانه',chimney:true},
  {x:930,y:250,w:240,h:170,name:'تالار',chimney:true}
@@ -320,11 +348,160 @@ runBtn.addEventListener('pointerup',stopRun);
 runBtn.addEventListener('pointercancel',stopRun);
 runBtn.addEventListener('pointerleave',stopRun);
 
+/* سیستم صدا */
+
+let audioCtx=null;
+let masterGain=null;
+let windGain=null;
+let soundEnabled=true;
+let audioStarted=false;
+let ambientNodes=[];
+let birdTimer=null;
+
+function initAudio(){
+ if(audioStarted)return;
+
+ try{
+  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+
+  masterGain=audioCtx.createGain();
+  masterGain.gain.value=document.getElementById('volume').value/100;
+  masterGain.connect(audioCtx.destination);
+
+  windGain=audioCtx.createGain();
+  windGain.gain.value=.025;
+  windGain.connect(masterGain);
+
+  // صدای باد
+  const bufferSize=audioCtx.sampleRate*2;
+  const buffer=audioCtx.createBuffer(1,bufferSize,audioCtx.sampleRate);
+  const data=buffer.getChannelData(0);
+
+  for(let i=0;i<bufferSize;i++){
+   data[i]=Math.random()*2-1;
+  }
+
+  const noise=audioCtx.createBufferSource();
+  noise.buffer=buffer;
+  noise.loop=true;
+
+  const filter=audioCtx.createBiquadFilter();
+  filter.type='lowpass';
+  filter.frequency.value=350;
+
+  const noiseGain=audioCtx.createGain();
+  noiseGain.gain.value=.4;
+
+  noise.connect(filter);
+  filter.connect(noiseGain);
+  noiseGain.connect(windGain);
+  noise.start();
+
+  ambientNodes.push(noise);
+
+  // صدای محیط آرام
+  const hum=audioCtx.createOscillator();
+  const humGain=audioCtx.createGain();
+
+  hum.type='sine';
+  hum.frequency.value=75;
+  humGain.gain.value=.015;
+
+  hum.connect(humGain);
+  humGain.connect(masterGain);
+  hum.start();
+
+  ambientNodes.push(hum);
+
+  audioStarted=true;
+
+  startBirds();
+
+ }catch(e){
+  console.log('Audio unavailable');
+ }
+}
+
+function birdSound(){
+ if(!audioCtx||!soundEnabled||!started)return;
+
+ const osc=audioCtx.createOscillator();
+ const gain=audioCtx.createGain();
+
+ osc.type='sine';
+
+ const start=audioCtx.currentTime;
+ osc.frequency.setValueAtTime(1800+Math.random()*700,start);
+ osc.frequency.exponentialRampToValueAtTime(
+  2600+Math.random()*900,
+  start+.12
+ );
+ osc.frequency.exponentialRampToValueAtTime(
+  1500,
+  start+.28
+ );
+
+ gain.gain.setValueAtTime(.001,start);
+ gain.gain.linearRampToValueAtTime(.035,start+.04);
+ gain.gain.exponentialRampToValueAtTime(.001,start+.3);
+
+ osc.connect(gain);
+ gain.connect(masterGain);
+
+ osc.start(start);
+ osc.stop(start+.32);
+}
+
+function startBirds(){
+ if(birdTimer)clearInterval(birdTimer);
+
+ birdTimer=setInterval(()=>{
+  if(!soundEnabled||!started)return;
+
+  let d=daylight();
+
+  if(d>.45&&Math.random()<.65){
+   birdSound();
+  }
+ },3500+Math.random()*2000);
+}
+
+document.getElementById('soundBtn').onclick=()=>{
+ soundEnabled=!soundEnabled;
+
+ if(masterGain){
+  masterGain.gain.setTargetAtTime(
+   soundEnabled?document.getElementById('volume').value/100:0,
+   audioCtx.currentTime,
+   .2
+  );
+ }
+
+ document.getElementById('soundBtn').textContent=
+ soundEnabled?'🔊 صدا':'🔇 بی‌صدا';
+};
+
+document.getElementById('volume').oninput=e=>{
+ if(masterGain&&soundEnabled){
+  masterGain.gain.setTargetAtTime(
+   e.target.value/100,
+   audioCtx.currentTime,
+   .1
+  );
+ }
+};
+
 /* شروع */
 
 document.getElementById('play').addEventListener('click',()=>{
  started=true;
  document.getElementById('start').style.display='none';
+
+ initAudio();
+
+ if(audioCtx&&audioCtx.state==='suspended'){
+  audioCtx.resume();
+ }
 });
 
 /* ابزار رسم */
@@ -428,6 +605,12 @@ function drawBuilding(b){
 
  rect(b.x+b.w/2-20,b.y+b.h-65,40,65,'#35241c');
  rect(b.x+b.w/2-15,b.y+b.h-60,30,60,'#4a3023');
+
+ // دودکش
+ if(b.chimney){
+  rect(b.x+b.w-48,b.y-32,25,40,'#59463a');
+  rect(b.x+b.w-53,b.y-36,35,9,'#392b26');
+ }
 
  ctx.fillStyle='#d3c1a0';
  ctx.font='11px Tahoma';
@@ -572,24 +755,51 @@ function moveNPC(n,dt){
  }
 }
 
-/* شب و روز */
+/* زمان */
 
 let gameTime=0;
-let dayLength=240;
+const dayLength=240;
 let smoke=[];
 
-for(let i=0;i<30;i++){
+for(let i=0;i<40;i++){
  smoke.push({
   x:0,y:0,
-  r:3+Math.random()*5,
+  r:3+Math.random()*6,
   life:Math.random(),
-  speed:.2+Math.random()*.35
+  speed:.2+Math.random()*.35,
+  drift:Math.random()*2-1
  });
+}
+
+/* ساعت بازی: 6 صبح تا 6 صبح */
+
+function getGameClock(){
+ let totalMinutes=360+(gameTime/dayLength)*1440;
+ totalMinutes%=1440;
+
+ let hour=Math.floor(totalMinutes/60);
+ let minute=Math.floor(totalMinutes%60);
+
+ return{
+  hour,
+  minute,
+  text:String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0')
+ };
 }
 
 function daylight(){
  let t=(gameTime%dayLength)/dayLength;
+
  return (Math.sin(t*Math.PI*2-Math.PI/2)+1)/2;
+}
+
+function getPhase(){
+ const c=getGameClock();
+
+ if(c.hour>=5&&c.hour<8)return '🌅 صبح';
+ if(c.hour>=8&&c.hour<17)return '☀️ روز';
+ if(c.hour>=17&&c.hour<20)return '🌇 غروب';
+ return '🌙 شب';
 }
 
 /* چراغ ها */
@@ -601,8 +811,6 @@ function drawLights(day){
   let wx=b.x+28;
   let wy=b.y+58;
 
-  ctx.save();
-
   let grd=ctx.createRadialGradient(
    wx-camX,wy-camY,2,
    wx-camX,wy-camY,80
@@ -613,8 +821,6 @@ function drawLights(day){
 
   ctx.fillStyle=grd;
   ctx.fillRect(wx-80-camX,wy-80-camY,160,160);
-
-  ctx.restore();
 
   if(darkness>.35){
    rect(
@@ -652,30 +858,63 @@ function drawLights(day){
  });
 }
 
-/* دود دودکش */
+/* دود طبیعی */
 
 function drawSmoke(dt){
  buildings.filter(b=>b.chimney).forEach(b=>{
   let x=b.x+b.w-35;
-  let y=b.y-30;
+  let y=b.y-36;
 
-  rect(x-5,y-8,12,12,'#382b27');
+  for(let i=0;i<8;i++){
+   let p=smoke[(buildings.indexOf(b)*8+i)%smoke.length];
 
-  for(let i=0;i<5;i++){
-   let p=smoke[(buildings.indexOf(b)*5+i)%smoke.length];
-
-   p.life+=dt*p.speed;
+   p.life+=dt*p.speed*.006;
 
    if(p.life>1)p.life=0;
 
+   let sway=Math.sin(gameTime*1.5+p.life*8)*12;
+
+   let sx=x+sway+p.drift*p.life*20;
+   let sy=y-p.life*70;
+
+   let alpha=.18*(1-p.life);
+
    circle(
-    x+Math.sin(p.life*5+i)*8,
-    y-p.life*45,
-    p.r*(1-p.life*.5),
-    `rgba(180,185,180,${.14*(1-p.life)})`
+    sx,sy,
+    p.r*(.5+p.life),
+    `rgba(190,195,190,${alpha})`
    );
   }
  });
+}
+
+/* تغییر نور آسمان */
+
+function drawAtmosphere(day){
+ let darkness=1-day;
+
+ // رنگ کلی آسمان و محیط
+ ctx.fillStyle=`rgba(9,18,38,${darkness*.58})`;
+ ctx.fillRect(0,0,W,H);
+
+ // طلوع و غروب
+ let clock=getGameClock();
+ let orange=0;
+
+ if(clock.hour>=5&&clock.hour<8){
+  orange=1-(clock.hour-5)/3;
+ }
+
+ if(clock.hour>=17&&clock.hour<20){
+  orange=(clock.hour-17)/3;
+ }
+
+ orange=Math.max(0,Math.min(1,orange));
+
+ if(orange>0){
+  ctx.fillStyle=`rgba(180,95,40,${orange*.09})`;
+  ctx.fillRect(0,0,W,H);
+ }
 }
 
 /* به روز رسانی */
@@ -781,20 +1020,15 @@ function draw(dt){
  npcs.forEach(drawNPC);
  drawPlayer();
 
- let night=1-day;
+ drawAtmosphere(day);
 
- ctx.fillStyle=`rgba(9,18,38,${night*.58})`;
- ctx.fillRect(0,0,W,H);
-
- let phase=(gameTime%dayLength)/dayLength;
-
- let label=
- phase<.25?'🌅 صبح':
- phase<.5?'☀️ روز':
- phase<.75?'🌇 غروب':'🌙 شب';
+ let clock=getGameClock();
 
  document.getElementById('stats').innerHTML=
- '❤️ 100<br>🪙 25<br>'+label;
+ '❤️ 100<br>'+
+ '🪙 25<br>'+
+ getPhase()+'<br>'+
+ '🕐 '+clock.text;
 }
 
 /* حلقه */
@@ -813,5 +1047,6 @@ function loop(now){
 
 requestAnimationFrame(loop);
 </script>
+
 </body>
 </html>
