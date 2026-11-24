@@ -54,9 +54,7 @@ p{font-size:12px;line-height:2;color:#c4cbd4}
   <div class="panel"><div id="title">DARK REALM</div><small>THE LIVING KINGDOM</small></div>
   <div class="panel" id="stats"></div>
  </div>
- <button id="settingsBtn">⚙</button>
- <button id="bagBtn">🎒</button>
- <button id="questBtn">📜</button>
+ <button id="settingsBtn">⚙</button><button id="bagBtn">🎒</button><button id="questBtn">📜</button>
  <div id="settingsPanel">
   <b style="color:#e3c78f">تنظیمات</b>
   <div style="font-size:11px;margin-top:9px">صدای بازی</div>
@@ -76,45 +74,40 @@ p{font-size:12px;line-height:2;color:#c4cbd4}
   </div>
  </div>
 </div>
-<div id="gameMenu">
- <div id="menuCard">
-  <div id="menuTitle"></div>
-  <div id="menuBody"></div>
-  <div class="menuActions" id="menuActions"></div>
-  <button id="closeMenu">بستن</button>
- </div>
-</div>
-<div id="start">
- <div class="card">
-  <h1>DARK REALM</h1>
-  <div style="color:#b9a47c">THE LIVING KINGDOM</div>
-  <p>زندگی کن، با مردم ارتباط برقرار کن، قلعه بساز و رازهای سرزمین‌های تاریک را کشف کن.</p>
-  <button id="play">شروع ماجراجویی</button>
-  <p>نسخه آزمایشی آفلاین</p>
- </div>
-</div>
+<div id="gameMenu"><div id="menuCard">
+ <div id="menuTitle"></div><div id="menuBody"></div>
+ <div class="menuActions" id="menuActions"></div>
+ <button id="closeMenu">بستن</button>
+</div></div>
+<div id="start"><div class="card">
+ <h1>DARK REALM</h1><div style="color:#b9a47c">THE LIVING KINGDOM</div>
+ <p>زندگی کن، با مردم ارتباط برقرار کن، قلعه بساز و رازهای سرزمین‌های تاریک را کشف کن.</p>
+ <button id="play">شروع ماجراجویی</button><p>نسخه آزمایشی آفلاین</p>
+</div></div>
 <script>
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d',{alpha:false});
 let W=innerWidth,H=innerHeight,camX=0,camY=0,started=false;
 const DPR=Math.min(devicePixelRatio||1,1.15);
 function resize(){W=innerWidth;H=innerHeight;canvas.width=Math.floor(W*DPR);canvas.height=Math.floor(H*DPR);canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(DPR,0,0,DPR,0,0)}
 addEventListener('resize',resize);resize();
-
 const world={w:5600,h:4500};
 const player={x:1150,y:890,direction:'down',moving:false,frame:0};
 let keys={},joy={x:0,y:0},running=false,near=null,nearBuilding=null,nearPortal=null,nearDungeon=false;
 let gameTime=0,lastShot=0,weatherTimer=0,weather='clear',weatherParticles=[];
 const game={
  coins:25,health:100,maxHealth:100,
- inventory:{نان:0,معجون:0,چوب:0,سنگ:0,گل:0,شمشیر:0,تیر:0},
+ inventory:{نان:0,معجون:0,چوب:0,سنگ:0,گل:0,شمشیر:0,تیر:0,'شاتگان':0,'AK-47':0},
  ownedHouse:null,planted:0,workCount:0,lastWork:-9999,
  ammo:12,maxAmmo:12,xp:0,level:1,kills:0,
  outfit:0,hair:0,cloak:0,hat:0,boot:0,weapon:true,
  giftUsed:false,questStep:0,discovered:[],bossDefeated:false,
  castleOwned:false,guards:0,territoryLevel:1,treasury:0,
  dungeonCleared:false,dungeonChest:false,dungeonEntered:false,
- reputation:0
+ reputation:0,keys:0,unlockedHouses:[],storage:{},ownedProperties:[]
 };
+const buildingInterior={active:false,buildingId:null,returnX:0,returnY:0,exitX:0,exitY:0};
+let nearInteriorExit=false,nearInteriorChest=false,nearInteriorBed=false,nearInteriorMerchant=false;
+const interiorRoom={x:3500,y:2700,w:620,h:430};
 const outfits=[
  {name:'لباس آبی مسافر',color:'#334b68',trim:'#415e7f'},
  {name:'لباس سبز جنگل',color:'#36583e',trim:'#54784b'},
@@ -125,15 +118,14 @@ const outfits=[
 const hairs=['قهوه‌ای','مشکی','طلایی','نقره‌ای'],hairColors=['#30241f','#171717','#d4aa54','#aeb5bd'];
 const cloakColors=['بدون شنل','#6a2630','#263c58','#31533c','#4d3b65'];
 const hatNames=['بدون کلاه','کلاه مسافر','کلاه نگهبان'],bootNames=['چکمه قهوه‌ای','چکمه تیره','چکمه روشن'];
-
 const buildings=[
  {id:'home1',x:650,y:350,w:220,h:170,name:'خانه کوچک',type:'home',price:80},
  {id:'bakery',x:1400,y:350,w:240,h:190,name:'نانوایی',type:'bakery'},
  {id:'inn',x:2200,y:350,w:250,h:190,name:'مسافرخانه',type:'inn'},
  {id:'home2',x:650,y:1050,w:230,h:180,name:'خانه باغی',type:'home',price:140},
  {id:'blacksmith',x:1400,y:1050,w:250,h:200,name:'آهنگری',type:'blacksmith'},
- {id:'home3',x:2200,y:1050,w:220,h:180,name:'خانه قدیمی',type:'home',price:110},
- {id:'home4',x:650,y:1740,w:230,h:180,name:'خانه جنگلی',type:'home',price:170},
+ {id:'home3',x:2200,y:1050,w:220,h:180,name:'خانه قدیمی',type:'home',price:110,locked:true,keyPrice:20},
+ {id:'home4',x:650,y:1740,w:230,h:180,name:'خانه جنگلی',type:'home',price:170,locked:true,keyPrice:20},
  {id:'market',x:1400,y:1740,w:250,h:190,name:'بازارچه',type:'market'},
  {id:'armory',x:2200,y:1740,w:250,h:190,name:'فروشگاه سلاح',type:'armory'}
 ];
@@ -153,8 +145,7 @@ const npcs=[
  {x:1600,y:850,name:'اراد',msg:'این شهر پر از رازهای پنهان است.',color:'#242735',job:'راهنمای شهر',personality:'کنجکاو'},
  {x:2050,y:1740,name:'ممد اسموک',msg:'شاید یک روز در بازار کار پیدا کنم.',color:'#292b32',job:'کمک در بازار',personality:'خجالتی'}
 ];
-npcs.forEach((n,i)=>{n.homeX=n.x;n.homeY=n.y;n.route=[{x:n.x,y:n.y},{x:n.x+45,y:n.y+35},{x:n.x+80,y:n.y},{x:n.x+30,y:n.y-45},{x:n.x-35,y:n.y-20}];n.friend=0;n.target=0;n.pause=20+i*7;n.walk=0;n.moving=false;n.mood='خوشحال';});
-
+npcs.forEach((n,i)=>{n.homeX=n.x;n.homeY=n.y;n.route=[{x:n.x,y:n.y},{x:n.x+45,y:n.y+35},{x:n.x+80,y:n.y},{x:n.x+30,y:n.y-45},{x:n.x-35,y:n.y-20}];n.friend=0;n.target=0;n.pause=20+i*7;n.walk=0;n.moving=false;n.mood='خوشحال'});
 const regions=[
  {id:'forest',name:'جنگل زمردی',x:3000,y:100,w:1100,h:850,color:'#254d32',icon:'🌳'},
  {id:'cave',name:'غار بلورین',x:3000,y:1450,w:1100,h:850,color:'#35465e',icon:'💎'},
@@ -163,14 +154,14 @@ const regions=[
  {id:'castle',name:'قلعه تاریک',x:4300,y:1500,w:1100,h:850,color:'#392c45',icon:'🏰'}
 ];
 const portals=[{x:2650,y:890,name:'دروازه جهان',target:-1},...regions.map((r,i)=>({x:r.x+100,y:r.y+100,name:r.name,target:i}))];
-const dungeon={x:3500,y:1900,w:260,h:210,name:'سیاه‌چال فراموش‌شده',inside:false};
+const dungeon={x:3500,y:1900,w:260,h:210,name:'سیاه‌چال فراموش‌شده',inside:false,returnX:3450,returnY:1880};
 const trees=[];
 function overlaps(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
 function safeTree(x,y,s){
  const box={x:x-s,y:y-s,w:s*2,h:s*2};
  if(buildingZones.some(b=>overlaps(box,b))||roads.some(r=>overlaps(box,r))||overlaps(box,fountainZone)||regions.some(r=>overlaps(box,r)))return false;
  if(npcs.some(n=>Math.hypot(x-n.x,y-n.y)<100))return false;
- return true;
+ return true
 }
 for(let i=0;i<65;i++)for(let a=0;a<80;a++){let x=40+Math.random()*2720,y=40+Math.random()*2220,s=18+Math.random()*14;if(safeTree(x,y,s)){trees.push({x,y,size:s});break}}
 const obstacles=[];
@@ -187,26 +178,43 @@ const enemySpecs={
  castle:[{shape:'knight',name:'شوالیه تاریکی',color:'#9b76bd',hp:175,speed:.34,damage:23,reward:70,xp:55},{shape:'darkmage',name:'جادوگر سایه',color:'#b38ad5',hp:115,speed:.3,damage:20,reward:65,xp:52,ranged:true},{shape:'demon',name:'فرمانده اهریمنی',color:'#a34d75',hp:460,speed:.25,damage:28,reward:180,xp:130,boss:true}]
 };
 function spawnEnemy(region,spec){
- const list=enemySpecs[region.id]||[];spec=spec||list[Math.floor(Math.random()*list.length)];if(!spec||spec.boss&&game.bossDefeated||spec.boss&&enemies.some(e=>e.alive&&e.boss))return;
+ const list=enemySpecs[region.id]||[];spec=spec||list[Math.floor(Math.random()*list.length)];
+ if(!spec||spec.boss&&game.bossDefeated||spec.boss&&enemies.some(e=>e.alive&&e.boss))return;
  const margin=100,x=region.x+margin+Math.random()*(region.w-margin*2),y=region.y+margin+Math.random()*(region.h-margin*2);
- enemies.push({x,y,hp:spec.hp,maxHp:spec.hp,alive:true,phase:Math.random()*6,hit:0,touchCooldown:0,regionId:region.id,type:region.id,shape:spec.shape,color:spec.color,name:spec.name,reward:spec.reward,xpReward:spec.xp,speed:spec.speed,damage:spec.damage,ranged:!!spec.ranged,boss:!!spec.boss,attackCooldown:90+Math.random()*60});
+ enemies.push({x,y,hp:spec.hp,maxHp:spec.hp,alive:true,phase:Math.random()*6,hit:0,touchCooldown:0,regionId:region.id,type:region.id,shape:spec.shape,color:spec.color,name:spec.name,reward:spec.reward,xpReward:spec.xp,speed:spec.speed,damage:spec.damage,ranged:!!spec.ranged,boss:!!spec.boss,attackCooldown:90+Math.random()*60})
 }
 function spawnSlime(){
  const spots=[[150,250,900,500],[1800,200,850,500],[100,1650,1000,500],[1800,1650,850,500]],s=spots[Math.floor(Math.random()*spots.length)];
  let x=s[0]+Math.random()*s[2],y=s[1]+Math.random()*s[3];
  if(Math.hypot(x-player.x,y-player.y)<230){x=300+Math.random()*500;y=300+Math.random()*500}
- enemies.push({x,y,hp:35,maxHp:35,alive:true,phase:Math.random()*6,hit:0,touchCooldown:0,type:'slime',shape:'slime',color:'#5b9b67',name:'اسلایم',reward:8,xpReward:15,speed:.38,damage:8,attackCooldown:100});
+ enemies.push({x,y,hp:35,maxHp:35,alive:true,phase:Math.random()*6,hit:0,touchCooldown:0,type:'slime',shape:'slime',color:'#5b9b67',name:'اسلایم',reward:8,xpReward:15,speed:.38,damage:8,attackCooldown:100})
 }
 for(let i=0;i<5;i++)spawnSlime();
 regions.forEach(r=>enemySpecs[r.id].forEach(s=>spawnEnemy(r,s)));
-/* دشمنان سیاه‌چال */
 const dungeonEnemies=[];
 function spawnDungeon(){
  if(dungeonEnemies.length)return;
- for(let i=0;i<4;i++)dungeonEnemies.push({x:dungeon.x+45+i*48,y:dungeon.y+105+(i%2)*35,hp:75+i*18,maxHp:75+i*18,alive:true,phase:i,hit:0,touchCooldown:0,name:['نگهبان دخمه','اسکلت دخمه','شبح تاریک','غول دخمه'][i],color:['#8c9c78','#c4b99b','#9c75bd','#687b88'][i],speed:.28+i*.035,damage:12+i*2,reward:20+i*8,xpReward:25+i*5,shape:i===3?'golem':'skeleton',boss:i===3,attackCooldown:100});
+ for(let i=0;i<4;i++)dungeonEnemies.push({x:dungeon.x+45+i*48,y:dungeon.y+105+(i%2)*35,hp:75+i*18,maxHp:75+i*18,alive:true,phase:i,hit:0,touchCooldown:0,name:['نگهبان دخمه','اسکلت دخمه','شبح تاریک','غول دخمه'][i],color:['#8c9c78','#c4b99b','#9c75bd','#687b88'][i],speed:.28+i*.035,damage:12+i*2,reward:20+i*8,xpReward:25+i*5,shape:i===3?'golem':'skeleton',boss:i===3,attackCooldown:100})
 }
-function saveGame(){try{localStorage.setItem('darkRealmSave',JSON.stringify({game,gameTime,weather,player:{x:player.x,y:player.y},friends:npcs.map(n=>n.friend)}))}catch(e){}}
-function loadGame(){try{const s=JSON.parse(localStorage.getItem('darkRealmSave')||'null');if(!s)return;if(s.game)Object.assign(game,s.game);if(s.player){player.x=Number(s.player.x)||1150;player.y=Number(s.player.y)||890}if(Array.isArray(s.friends))npcs.forEach((n,i)=>n.friend=s.friends[i]||0);gameTime=Number(s.gameTime)||0;weather=s.weather||'clear'}catch(e){}}
+function saveGame(){
+ try{localStorage.setItem('darkRealmSave',JSON.stringify({game,gameTime,weather,player:{x:player.x,y:player.y},friends:npcs.map(n=>n.friend),buildingInterior,dungeon:{inside:dungeon.inside,returnX:dungeon.returnX,returnY:dungeon.returnY}}))}catch(e){}
+}
+function loadGame(){
+ try{
+  const s=JSON.parse(localStorage.getItem('darkRealmSave')||'null');if(!s)return;
+  if(s.game)Object.assign(game,s.game);
+  game.inventory=Object.assign({نان:0,معجون:0,چوب:0,سنگ:0,گل:0,شمشیر:0,تیر:0,'شاتگان':0,'AK-47':0},game.inventory||{});
+  game.unlockedHouses=Array.isArray(game.unlockedHouses)?game.unlockedHouses:[];
+  game.storage=game.storage||{};
+  if(s.player){player.x=Number(s.player.x)||1150;player.y=Number(s.player.y)||890}
+  if(Array.isArray(s.friends))npcs.forEach((n,i)=>n.friend=s.friends[i]||0);
+  gameTime=Number(s.gameTime)||0;weather=s.weather||'clear';
+  if(s.dungeon){dungeon.returnX=s.dungeon.returnX||3450;dungeon.returnY=s.dungeon.returnY||1880}
+  // پس از بارگذاری، بازیکن در فضای بیرون قرار می‌گیرد تا گیر نکند.
+  if(s.buildingInterior?.active){player.x=s.buildingInterior.returnX||1150;player.y=s.buildingInterior.returnY||890}
+  dungeon.inside=false;buildingInterior.active=false;
+ }catch(e){}
+}
 loadGame();
 addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key==='e'||e.key==='E')interact();if(e.key==='Escape')closeMenu();if(e.key===' ')shoot()});
 addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
@@ -234,13 +242,12 @@ function drawGround(){
  roads.forEach(r=>{if(!visible(r.x,r.y,r.w,r.h))return;rect(r.x-9,r.y-9,r.w+18,r.h+18,'#403a32');rect(r.x,r.y,r.w,r.h,'#655747');
  if(r.w>=r.h){let fx=r.x+Math.floor((Math.max(0,camX-40)-r.x)/42)*42,fy=r.y+8+Math.floor((Math.max(r.y+8,camY-40)-(r.y+8))/34)*34;for(let y=fy;y<Math.min(r.y+r.h,camY+H+40);y+=34)for(let x=fx;x<Math.min(r.x+r.w,camX+W+40);x+=42)if(x>=r.x){rect(x,y,28,22,'#796a57');rect(x+29,y,3,22,'#51483c')}}
  else{let fx=r.x+8+Math.floor((Math.max(r.x+8,camX-40)-(r.x+8))/34)*34,fy=r.y+Math.floor((Math.max(0,camY-40)-r.y)/42)*42;for(let x=fx;x<Math.min(r.x+r.w,camX+W+40);x+=34)for(let y=fy;y<Math.min(r.y+r.h,camY+H+40);y+=42){rect(x,y,22,28,'#796a57');rect(x,y+29,22,3,'#51483c')}}});
- circle(1150,890,100,'#746653');circle(1150,890,86,'#665747');circle(1150,890,70,'#796a57');circle(1150,890,36,'#3c5658');circle(1150,890,12,'#9a8a66');
+ circle(1150,890,100,'#746653');circle(1150,890,86,'#665747');circle(1150,890,70,'#796a57');circle(1150,890,36,'#3c5658');circle(1150,890,12,'#9a8a66')
 }
 function drawCityWall(){
  const t=34,x1=0,y1=0,x2=2800,y2=2300;
  rect(x1,y1,x2,t,'#40372e');rect(x1,y2-t,x2,t,'#40372e');rect(x1,y1,t,y2,'#40372e');rect(x2-t,y1,t,y2,'#40372e');
- rect(x1+5,y1+5,x2-10,8,'#9b8765');rect(x1+5,y2-t+5,x2-10,8,'#9b8765');
- rect(x1+5,y1+5,8,y2-10,'#9b8765');rect(x2-t+5,y1+5,8,y2-10,'#9b8765');
+ rect(x1+5,y1+5,x2-10,8,'#9b8765');rect(x1+5,y2-t+5,x2-10,8,'#9b8765');rect(x1+5,y1+5,8,y2-10,'#9b8765');rect(x2-t+5,y1+5,8,y2-10,'#9b8765');
  for(let x=80;x<2700;x+=130){rect(x,0,22,18,'#b49b70');rect(x,2282,22,18,'#b49b70')}
  for(let y=90;y<2200;y+=130){rect(0,y,18,22,'#b49b70');rect(2782,y,18,22,'#b49b70')}
  for(const [x,y] of [[0,0],[2760,0],[0,2260],[2760,2260]]){rect(x,y,40,40,'#51463a');rect(x+8,y+8,24,24,'#ad936b')}
@@ -262,12 +269,12 @@ function drawBuilding(b){
  rect(b.x+25,b.y+55,35,45,'#b08c54');rect(b.x+b.w-60,b.y+55,35,45,'#b08c54');rect(b.x+b.w/2-20,b.y+b.h-65,40,65,'#35241c');
  if(b.type==='armory'){rect(b.x+b.w/2-35,b.y-13,70,22,'#9a493b');ctx.fillStyle='#fff0c2';ctx.font='bold 11px Tahoma';ctx.textAlign='center';ctx.fillText('⚔ فروشگاه سلاح',b.x+b.w/2-camX,b.y+2-camY)}
  ctx.fillStyle='#d3c1a0';ctx.font='11px Tahoma';ctx.textAlign='center';ctx.fillText(b.name,b.x+b.w/2-camX,b.y-30-camY);
- if(b.type==='home'&&game.ownedHouse===b.id)ctx.fillText('خانه من',b.x+b.w/2-camX,b.y-45-camY);
+ if(b.type==='home'&&game.ownedHouse===b.id)ctx.fillText('خانه من',b.x+b.w/2-camX,b.y-45-camY)
 }
 function drawNPC(n){
  if(!visible(n.x-30,n.y-50,60,80))return;let step=n.moving?Math.sin(n.walk)*3:0;
  circle(n.x,n.y+10,11,'#111');rect(n.x-7+step,n.y+14,5,10,'#292d35');rect(n.x+2-step,n.y+14,5,10,'#292d35');circle(n.x,n.y,9,'#b98c69');rect(n.x-8,n.y+8,16,20,n.color);
- ctx.fillStyle='#f3dca5';ctx.font='12px Tahoma';ctx.textAlign='center';ctx.fillText(n.name,n.x-camX,n.y-28-camY);
+ ctx.fillStyle='#f3dca5';ctx.font='12px Tahoma';ctx.textAlign='center';ctx.fillText(n.name,n.x-camX,n.y-28-camY)
 }
 function drawPlayer(){
  let x=player.x,y=player.y,walk=player.moving?Math.sin(player.frame)*4:0,outfit=outfits[game.outfit]||outfits[0];
@@ -283,13 +290,12 @@ function drawPlayer(){
  circle(x,y+12,e.boss?21:17,'#111814');
  if(['wolf','icewolf'].includes(e.shape)){
   circle(x,y+b,15,c);circle(x+12,y-5+b,10,c);
-  ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(x+4-camX,y-10+b-camY);ctx.lineTo(x+7-camX,y-25+b-camY);ctx.lineTo(x+15-camX,y-10+b-camY);ctx.moveTo(x+17-camX,y-10+b-camY);ctx.lineTo(x+23-camX,y-22+b-camY);ctx.lineTo(x+27-camX,y-5+b-camY);ctx.fill();
-  circle(x+17,y-7+b,2,'#ffdf8a');
+  ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(x+4-camX,y-10+b-camY);ctx.lineTo(x+7-camX,y-25+b-camY);ctx.lineTo(x+15-camX,y-10+b-camY);ctx.moveTo(x+17-camX,y-10+b-camY);ctx.lineTo(x+23-camX,y-22+b-camY);ctx.lineTo(x+27-camX,y-5+b-camY);ctx.fill();circle(x+17,y-7+b,2,'#ffdf8a');
  }else if(e.shape==='treant'){
   rect(x-10,y-15+b,20,32,c);rect(x-17,y-8+b,8,23,'#514b35');rect(x+9,y-8+b,8,23,'#514b35');circle(x,y-17+b,13,c);circle(x-5,y-19+b,2,'#e4d99b');circle(x+5,y-19+b,2,'#e4d99b');
- }else if(e.shape==='archer'||e.shape==='spider'||e.shape==='bat'){
+ }else if(['archer','spider','bat'].includes(e.shape)){
   circle(x,y-10+b,10,c);rect(x-9,y+b,18,22,c);
-  if(e.shape==='spider'){for(let i=0;i<4;i++){let s=i<2?-1:1;rect(x+s*9,y-5+(i%2)*12+b,s*13,3,'#a7d9df')}}
+  if(e.shape==='spider')for(let i=0;i<4;i++){let s=i<2?-1:1;rect(x+s*9,y-5+(i%2)*12+b,s*13,3,'#a7d9df')}
   if(e.shape==='bat'){ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(x-5-camX,y-4+b-camY);ctx.lineTo(x-25-camX,y-17+b-camY);ctx.lineTo(x-18-camX,y+8+b-camY);ctx.lineTo(x-5-camX,y+5+b-camY);ctx.moveTo(x+5-camX,y-4+b-camY);ctx.lineTo(x+25-camX,y-17+b-camY);ctx.lineTo(x+18-camX,y+8+b-camY);ctx.lineTo(x+5-camX,y+5+b-camY);ctx.fill()}
  }else if(['golem','icegiant','sentinel'].includes(e.shape)){
   rect(x-15,y-18+b,30,35,c);rect(x-21,y-12+b,8,23,c);rect(x+13,y-12+b,8,23,c);rect(x-13,y-30+b,26,16,c);rect(x-9,y-25+b,4,4,'#f4e7a5');rect(x+5,y-25+b,4,4,'#f4e7a5');
@@ -318,25 +324,99 @@ function drawDungeon(){
  if(!game.dungeonChest){rect(dungeon.x+190,dungeon.y+125,34,28,'#a87935');rect(dungeon.x+190,dungeon.y+125,34,7,'#e0b95c')}
 }
 function drawCastle(){
- const x=4550,y=1700;
- if(!visible(x,y,300,250))return;
+ const x=4550,y=1700;if(!visible(x,y,300,250))return;
  rect(x,y,300,220,'#332b38');rect(x+25,y-65,65,90,'#51405c');rect(x+115,y-95,75,120,'#594665');rect(x+215,y-65,65,90,'#51405c');
  for(let i=0;i<5;i++)rect(x+30+i*55,y+30,25,45,'#b18a60');
  ctx.fillStyle='#ead2a2';ctx.font='bold 14px Tahoma';ctx.textAlign='center';ctx.fillText('قلمرو تاریک',x+150-camX,y-110-camY);
 }
+
+/* سیستم ساختمان‌ها و اتاق‌های داخلی */
+function currentBuilding(){return buildings.find(b=>b.id===buildingInterior.buildingId)}
+function isHouseUnlocked(b){return !b.locked||game.unlockedHouses.includes(b.id)}
+function enterBuilding(b){
+ if(b.type==='home'&&b.locked&&!isHouseUnlocked(b)){
+  openMenu('🔒 خانه قفل است','برای باز کردن این خانه یک کلید لازم داری.',[
+   {label:'استفاده از کلید',action:'unlock:'+b.id},
+   {label:'بازگشت',action:'close',secondary:true}
+  ]);return;
+ }
+ buildingInterior.active=true;buildingInterior.buildingId=b.id;
+ buildingInterior.returnX=player.x;buildingInterior.returnY=player.y;
+ player.x=interiorRoom.x+interiorRoom.w/2;player.y=interiorRoom.y+interiorRoom.h-75;
+ closeMenu();saveGame();
+}
+function exitBuilding(){
+ player.x=buildingInterior.returnX;player.y=buildingInterior.returnY;
+ buildingInterior.active=false;buildingInterior.buildingId=null;
+ nearInteriorExit=nearInteriorChest=nearInteriorBed=nearInteriorMerchant=false;
+ closeMenu();saveGame();
+}
+function drawInterior(){
+ const b=currentBuilding();if(!b)return;
+ const x=interiorRoom.x,y=interiorRoom.y,w=interiorRoom.w,h=interiorRoom.h;
+ rect(x,y,w,h,'#29231f');rect(x+15,y+15,w-30,h-30,'#755e49');
+ rect(x+25,y+25,w-50,h-50,b.type==='home'?'#9a7959':'#806b55');
+ // کف اتاق و دیوارها
+ for(let i=0;i<10;i++)rect(x+30+i*55,y+35,2,h-70,'#5e4939');
+ rect(x+15,y+15,w-30,13,'#392c27');rect(x+15,y+h-28,w-30,13,'#392c27');
+ // در خروجی
+ rect(x+w/2-32,y+h-45,64,35,'#39251a');rect(x+w/2-25,y+h-40,50,30,'#9a7548');
+ circle(x+w/2+17,y+h-25,3,'#e3c17a');
+ // طراحی اختصاصی هر ساختمان
+ if(b.id==='home1'){
+  rect(x+65,y+85,180,95,'#805334');rect(x+75,y+95,160,70,'#b58a5b');rect(x+85,y+105,140,10,'#e0c18a');
+  rect(x+370,y+85,130,65,'#69442f');rect(x+390,y+105,90,25,'#b18a62');
+  rect(x+280,y+250,100,55,'#563a2a');rect(x+295,y+230,70,35,'#c5a47a');
+ }else if(b.id==='home2'){
+  rect(x+60,y+70,180,110,'#587044');rect(x+75,y+85,150,80,'#9e9b68');circle(x+130,y+120,24,'#d1a75c');
+  rect(x+350,y+85,150,80,'#76563a');rect(x+370,y+105,110,35,'#b6a078');
+  for(let i=0;i<5;i++)circle(x+80+i*35,y+260,9,['#d9788d','#e5c45c','#a67cc0'][i%3]);
+ }else if(b.id==='home3'){
+  rect(x+50,y+65,190,120,'#51423b');rect(x+65,y+80,160,90,'#88705c');
+  rect(x+360,y+70,130,115,'#51423b');rect(x+380,y+90,90,75,'#a18a72');
+  rect(x+260,y+245,120,60,'#49372e');rect(x+275,y+225,90,35,'#9a795d');
+ }else if(b.id==='home4'){
+  rect(x+55,y+70,190,105,'#476044');rect(x+70,y+85,160,75,'#8b9b68');
+  rect(x+370,y+70,130,100,'#4b3928');rect(x+390,y+90,90,60,'#9a784c');
+  circle(x+300,y+260,28,'#52744b');circle(x+340,y+260,23,'#68884f');
+ }else if(b.type==='bakery'){
+  rect(x+55,y+65,190,135,'#5c3425');rect(x+75,y+85,150,105,'#bd7950');circle(x+150,y+130,35,'#e2a35d');
+  rect(x+350,y+100,170,65,'#7d5335');for(let i=0;i<4;i++)circle(x+375+i*38,y+88,12,'#d5a45d');
+ }else if(b.type==='inn'){
+  for(let i=0;i<3;i++){rect(x+55+i*170,y+85,105,65,'#765033');rect(x+65+i*170,y+150,85,12,'#493326');}
+  rect(x+380,y+230,150,55,'#523725');rect(x+395,y+215,120,20,'#a17a4d');
+ }else if(b.type==='blacksmith'){
+  rect(x+55,y+80,170,100,'#493d38');circle(x+140,y+130,42,'#b45d35');circle(x+140,y+130,25,'#e5a24b');
+  rect(x+350,y+150,145,45,'#51545a');rect(x+370,y+125,105,25,'#92949a');
+ }else if(b.type==='market'){
+  for(let i=0;i<4;i++){rect(x+45+i*130,y+80,100,80,['#9a5a45','#59734d','#987c43','#69558a'][i]);rect(x+45+i*130,y+70,100,15,'#d0ad70');}
+  rect(x+120,y+240,370,35,'#61452e');
+ }else if(b.type==='armory'){
+  for(let i=0;i<5;i++){rect(x+55+i*100,y+65,12,145,'#594637');rect(x+40+i*100,y+95,45,8,'#a68c68');rect(x+60+i*100,y+110,5,65,'#c0c5cc');}
+  rect(x+350,y+245,160,45,'#57402f');
+ }
+ // صندوق و تخت در خانه متعلق به بازیکن
+ if(b.type==='home'&&game.ownedHouse===b.id){
+  rect(x+55,y+255,65,45,'#75451f');rect(x+55,y+255,65,10,'#c38c43');rect(x+85,y+270,8,8,'#e6c46f');
+  rect(x+440,y+245,100,48,'#6d4938');rect(x+450,y+235,80,20,'#d4c1a2');
+  ctx.fillStyle='#f5dfb5';ctx.font='12px Tahoma';ctx.textAlign='center';ctx.fillText('صندوق وسایل',x+87-camX,y+245-camY);ctx.fillText('تخت خواب',x+490-camX,y+225-camY);
+ }
+ // فروشنده داخل مغازه
+ if(['bakery','inn','blacksmith','market','armory'].includes(b.type)){
+  circle(x+w/2,y+115,11,'#b98c69');rect(x+w/2-11,y+126,22,30,b.type==='armory'?'#654d66':'#49634d');
+  ctx.fillStyle='#fff0c2';ctx.font='12px Tahoma';ctx.textAlign='center';ctx.fillText('فروشنده',x+w/2-camX,y+85-camY);
+ }
+ ctx.fillStyle='#f2d8a2';ctx.font='bold 15px Tahoma';ctx.textAlign='center';ctx.fillText(b.name,x+w/2-camX,y+48-camY);
+}
 function drawLighting(){
  const t=(gameTime%240)/240,day=(Math.sin(t*Math.PI*2-Math.PI/2)+1)/2;
- ctx.fillStyle=`rgba(9,18,38,${(1-day)*.48})`;ctx.fillRect(0,0,W,H);
- if(weather==='fog'){ctx.fillStyle='rgba(205,213,218,.14)';ctx.fillRect(0,0,W,H)}
+ ctx.fillStyle=`rgba(9,18,38,${(1-day)*(buildingInterior.active?.12:.48)})`;ctx.fillRect(0,0,W,H);
+ if(weather==='fog'&&!buildingInterior.active){ctx.fillStyle='rgba(205,213,218,.14)';ctx.fillRect(0,0,W,H)}
 }
 function drawWeather(){
- if(weather==='clear')return;
+ if(weather==='clear'||buildingInterior.active)return;
  ctx.strokeStyle=weather==='snow'?'#e6f4ff':'#a9c7dc';ctx.lineWidth=1.2;
- for(let i=0;i<35;i++){
-  const x=(i*83+performance.now()*.07)%W,y=(i*47+performance.now()*(weather==='snow'?.025:.25))%H;
-  if(weather==='rain'){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-4,y+10);ctx.stroke()}
-  else if(weather==='snow'){ctx.fillStyle='#e8f4ff';ctx.fillRect(x,y,3,3)}
- }
+ for(let i=0;i<35;i++){const x=(i*83+performance.now()*.07)%W,y=(i*47+performance.now()*(weather==='snow'?.025:.25))%H;if(weather==='rain'){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-4,y+10);ctx.stroke()}else if(weather==='snow'){ctx.fillStyle='#e8f4ff';ctx.fillRect(x,y,3,3)}}
 }
 function drawMinimap(){
  const mw=115,mh=86,x=W-mw-10,y=166;
@@ -357,10 +437,10 @@ document.getElementById('closeMenu').onclick=closeMenu;
 function notify(t,m){openMenu(t,m,[{label:'باشه',action:'close'}])}
 function itemRow(n,c){return `<div class="itemRow"><span>${n}</span><b>${c}</b></div>`}
 function showInventory(){
- let body=`<div>🪙 سکه: ${game.coins}</div><div>❤️ سلامتی: ${game.health}/${game.maxHealth}</div><div>✨ سطح: ${game.level} | تجربه: ${game.xp}/${game.level*50}</div><div>🔫 مهمات: ${game.ammo}/${game.maxAmmo}</div><hr>`;
+ let body=`<div>🪙 سکه: ${game.coins}</div><div>❤️ سلامتی: ${game.health}/${game.maxHealth}</div><div>✨ سطح: ${game.level} | تجربه: ${game.xp}/${game.level*50}</div><div>🔫 مهمات: ${game.ammo}/${game.maxAmmo}</div><div>🗝 کلید: ${game.keys}</div><hr>`;
  Object.keys(game.inventory).forEach(k=>body+=itemRow(k,game.inventory[k]));
- body+=`<hr><div>سلاح: ${game.weapon?'مجهز':'نداری'}</div><div>🏰 خزانه: ${game.treasury}</div><div>🛡 نگهبان‌ها: ${game.guards}</div>`;
- openMenu('🎒 کیف و تجهیزات',body,[{label:'پر کردن خشاب - ۳ سکه',action:'reload'},{label:'استفاده از معجون',action:'potion'},{label:'ذخیره بازی',action:'save'}]);
+ body+=`<hr><div>سلاح مجهز: ${game.weapon?'بله':'خیر'}</div><div>🏰 خزانه: ${game.treasury}</div><div>🛡 نگهبان‌ها: ${game.guards}</div>`;
+ openMenu('🎒 کیف و تجهیزات',body,[{label:'پر کردن خشاب - ۱۰ سکه',action:'reload'},{label:'استفاده از معجون',action:'potion'},{label:'ذخیره بازی',action:'save'}]);
 }
 function showCustomization(){
  let body=`<p>لباس:</p>${outfits.map((o,i)=>`<button class="choice" data-custom="outfit" data-value="${i}">${o.name}</button>`).join('')}<p>رنگ مو:</p>${hairs.map((o,i)=>`<button class="choice" data-custom="hair" data-value="${i}">${o}</button>`).join('')}<p>شنل:</p>${cloakColors.map((o,i)=>`<button class="choice" data-custom="cloak" data-value="${i}">${o}</button>`).join('')}<p>کلاه:</p>${hatNames.map((o,i)=>`<button class="choice" data-custom="hat" data-value="${i}">${o}</button>`).join('')}<p>کفش:</p>${bootNames.map((o,i)=>`<button class="choice" data-custom="boot" data-value="${i}">${o}</button>`).join('')}`;
@@ -381,27 +461,50 @@ document.getElementById('settingsBtn').onclick=()=>{const p=document.getElementB
 document.getElementById('closeSettings').onclick=()=>document.getElementById('settingsPanel').style.display='none';
 
 function showNPC(n){
- const hearts=Math.min(5,Math.floor(n.friend/2));
- const social=n.friend>=6?'دوست صمیمی':n.friend>=3?'آشنا':'تازه آشنا';
+ const hearts=Math.min(5,Math.floor(n.friend/2)),social=n.friend>=6?'دوست صمیمی':n.friend>=3?'آشنا':'تازه آشنا';
  openMenu('👤 '+n.name,`${n.msg}<hr><div>شغل: ${n.job}</div><div>شخصیت: ${n.personality}</div><div>حال امروز: ${n.mood}</div><div>رابطه: ${social}</div><div>دوستی: ${'♥'.repeat(hearts)}${'♡'.repeat(5-hearts)}</div>`,[{label:'گفت‌وگو + دوستی',action:'chat:'+n.name},{label:'هدیه (۵ سکه)',action:'gift:'+n.name},{label:'پرسیدن درباره کار',action:'npcjob:'+n.name}]);
 }
 function showBuilding(b){
- if(b.type==='bakery')openMenu('🥖 نانوایی','نان تازه: ۵ سکه',[{label:'خرید نان - ۵',action:'buy:نان:5'},{label:'کار در نانوایی',action:'work:bakery'}]);
- else if(b.type==='blacksmith')openMenu('⚒ آهنگری','شمشیر: ۳۰ سکه<br>سنگ: ۴ سکه',[{label:'خرید شمشیر - ۳۰',action:'buy:شمشیر:30'},{label:'خرید سنگ - ۴',action:'buy:سنگ:4'},{label:'کار در آهنگری',action:'work:blacksmith'}]);
- else if(b.type==='market')openMenu('🧺 بازارچه','معجون: ۱۲ سکه<br>چوب: ۳ سکه<br>گل: ۴ سکه',[{label:'خرید معجون - ۱۲',action:'buy:معجون:12'},{label:'خرید چوب - ۳',action:'buy:چوب:3'},{label:'خرید گل - ۴',action:'buy:گل:4'},{label:'فروش چوب +۵',action:'sell:چوب:5'},{label:'کار در بازار',action:'work:market'}]);
- else if(b.type==='armory')openMenu('🏹 فروشگاه سلاح و تجهیزات','تجهیزات فانتزی برای ماجراجویی',[{label:'خرید شمشیر فولادی - ۴۵',action:'buy:شمشیر:45'},{label:'خرید تیر - ۲',action:'buy:تیر:2'},{label:'خرید زره - ۶۰',action:'armor'},{label:'خرید معجون - ۱۲',action:'buy:معجون:12'}]);
- else if(b.type==='inn')openMenu('مسافرخانه','استراحت: ۴ سکه',[{label:'استراحت - ۴',action:'sleep'}]);
- else if(b.type==='home'){if(game.ownedHouse===b.id)openMenu('🏠 خانه من','باغچه: '+game.planted,[{label:'استراحت',action:'homesleep'},{label:'کاشتن گل -۲',action:'plant'}]);else openMenu('🏡 '+b.name,'قیمت: '+b.price+' سکه',[{label:'خرید خانه - '+b.price,action:'house:'+b.id}])}
+ let actions=[];
+ if(b.type==='home'){
+  if(game.ownedHouse===b.id){
+   openMenu('🏠 خانه من','این خانه متعلق به توست. می‌توانی داخلش استراحت کنی و وسایلت را در صندوق بگذاری.',[{label:'ورود به خانه',action:'enter:'+b.id}]);return;
+  }
+  let extra=b.locked&&!isHouseUnlocked(b)?'<p>🔒 برای ورود به کلید نیاز داری.</p>':'';
+  openMenu('🏡 '+b.name,extra+'قیمت: '+b.price+' سکه',[{label:'خرید خانه - '+b.price,action:'house:'+b.id},{label:'ورود',action:'enter:'+b.id}]);return;
+ }
+ openMenu('🏪 '+b.name,'برای ورود به ساختمان تعامل کن.',[{label:'ورود به '+b.name,action:'enter:'+b.id}]);
 }
 function showCastleMenu(){
  openMenu('🏰 حکومت و قلعه',`<p>قلمرو شخصی تو</p><div>خزانه: ${game.treasury} سکه</div><div>نگهبان‌ها: ${game.guards}</div><div>سطح قلمرو: ${game.territoryLevel}</div><div>درآمد دوره‌ای: ${game.guards*2+game.territoryLevel*3} سکه</div>`,[{label:'خرید نگهبان - ۳۰',action:'guard'},{label:'ارتقای قلمرو - ۱۰۰',action:'upgrade'},{label:'برداشت خزانه',action:'treasury'},{label:'ساخت قلعه - ۲۰۰',action:'castle'}]);
 }
+function showInteriorMerchant(b){
+ const actions=[];
+ if(b.type==='bakery')actions.push({label:'خرید نان - ۵',action:'buy:نان:5'},{label:'کار در نانوایی',action:'work:bakery'});
+ if(b.type==='inn')actions.push({label:'خرید معجون - ۱۲',action:'buy:معجون:12'},{label:'استراحت - ۴',action:'sleep'});
+ if(b.type==='blacksmith')actions.push({label:'خرید شمشیر - ۳۰',action:'buy:شمشیر:30'},{label:'خرید سنگ - ۴',action:'buy:سنگ:4'},{label:'کار در آهنگری',action:'work:blacksmith'});
+ if(b.type==='market')actions.push({label:'خرید معجون - ۱۲',action:'buy:معجون:12'},{label:'خرید چوب - ۳',action:'buy:چوب:3'},{label:'خرید گل - ۴',action:'buy:گل:4'},{label:'خرید کلید - ۲۰',action:'key'},{label:'فروش چوب +۵',action:'sell:چوب:5'});
+ if(b.type==='armory')actions.push({label:'شمشیر فولادی - ۴۵',action:'buy:شمشیر:45'},{label:'تیر - ۲',action:'buy:تیر:2'},{label:'زره - ۶۰',action:'armor'},{label:'معجون - ۱۲',action:'buy:معجون:12'},{label:'شاتگان فانتزی - ۲۰۰',action:'buy:شاتگان:200'},{label:'AK-47 فانتزی - ۳۰۰',action:'buy:AK-47:300'});
+ openMenu('🧑‍🍳 فروشنده '+b.name,'فروشنده آماده خدمت است.',actions);
+}
 function interact(){
  if(!started||gameMenu.style.display==='flex')return;
+ if(buildingInterior.active){
+  const b=currentBuilding();
+  if(nearInteriorExit){exitBuilding();return}
+  if(nearInteriorChest){showStorage();return}
+  if(nearInteriorBed){openMenu('🛏 استراحت در خانه','می‌خواهی تا صبح استراحت کنی؟',[{label:'خوابیدن و بازیابی سلامتی',action:'homesleep'}]);return}
+  if(nearInteriorMerchant&&b){showInteriorMerchant(b);return}
+  notify('داخل ساختمان','به در خروجی، صندوق، تخت یا فروشنده نزدیک‌تر شو.');return;
+ }
+ if(dungeon.inside){
+  if(nearDungeonExit){handleAction('dungeonExit');return}
+  if(Math.hypot(player.x-(dungeon.x+205),player.y-(dungeon.y+140))<65&&!game.dungeonChest){openMenu('💎 صندوق سیاه‌چال','صندوق گنج را باز کنی؟',[{label:'باز کردن صندوق',action:'dungeonChest'},{label:'بعداً',action:'close',secondary:true}]);return}
+  openMenu('سیاه‌چال','برای خروج به در خروجی نزدیک شو. خروج همیشه در دسترس است.',[{label:'خروج از سیاه‌چال',action:'dungeonExit'}]);return;
+ }
  if(nearPortal){
   if(nearPortal.target===-1)openMenu('🌌 دروازه جهان','یکی از پنج سرزمین را انتخاب کن:',regions.map((r,i)=>({label:r.icon+' '+r.name,action:'travel:'+i})));
-  else openMenu('🌌 '+regions[nearPortal.target].name,'می‌خواهی وارد این منطقه شوی؟',[{label:'ورود',action:'travel:'+nearPortal.target},{label:'بازگشت به شهر',action:'returncity'}]);
-  return;
+  else openMenu('🌌 '+regions[nearPortal.target].name,'می‌خواهی وارد این منطقه شوی؟',[{label:'ورود',action:'travel:'+nearPortal.target},{label:'بازگشت به شهر',action:'returncity'}]);return;
  }
  if(nearDungeon){openMenu('🚪 سیاه‌چال فراموش‌شده','درون این دخمه گنجی پنهان شده؛ آماده ورود هستی؟',[{label:'ورود به سیاه‌چال',action:'dungeonEnter'}]);return}
  if(nearCastle){showCastleMenu();return}
@@ -409,9 +512,23 @@ function interact(){
  if(nearBuilding){showBuilding(nearBuilding);return}
  notify('هیچ‌کس اینجا نیست','به مردم، ساختمان‌ها یا دروازه‌ها نزدیک‌تر شو.');
 }
-document.getElementById('talk').onclick=interact;function findNPC(n){return npcs.find(x=>x.name===n)}
-let nearCastle=false;
+document.getElementById('talk').onclick=interact;
+function findNPC(n){return npcs.find(x=>x.name===n)}
+let nearCastle=false,nearDungeonExit=false;
 
+function showStorage(){
+ const items=Object.keys(game.inventory).filter(k=>game.inventory[k]>0);
+ let body='<p>وسایلت را در صندوق خانه نگه دار.</p>'+itemRow('فضای صندوق','نامحدود');
+ items.forEach(k=>body+=itemRow(k,game.inventory[k]));
+ const actions=items.slice(0,8).map(k=>({label:'گذاشتن '+k,action:'deposit:'+k}));
+ actions.push({label:'برداشتن وسایل',action:'storageTakeMenu'});
+ openMenu('📦 صندوق شخصی',body,actions);
+}
+function showStorageTake(){
+ let items=Object.keys(game.storage).filter(k=>game.storage[k]>0);
+ let body='<p>وسایل ذخیره‌شده:</p>';items.forEach(k=>body+=itemRow(k,game.storage[k]));
+ openMenu('📦 برداشتن از صندوق',body,items.map(k=>({label:'برداشتن '+k,action:'withdraw:'+k})));
+}
 function handleAction(a){
  if(!a)return;if(a==='close'){closeMenu();return}
  if(a==='save'){saveGame();notify('ذخیره شد','پیشرفت بازی ذخیره شد.');return}
@@ -419,69 +536,117 @@ function handleAction(a){
   const input=document.getElementById('giftInput'),code=input?input.value.trim().toUpperCase():'';
   if(code!=='MAX'){notify('کد نامعتبر','این کد معتبر نیست.');return}
   if(game.giftUsed){notify('کد تکراری','قبلاً از این کد استفاده کرده‌ای.');return}
-  game.coins+=1000;game.giftUsed=true;saveGame();notify('🎉 جایزه دریافت شد','۱۰۰۰ سکه به کیف پولت اضافه شد.');return
+  game.coins+=1000;game.giftUsed=true;saveGame();notify('🎉 جایزه دریافت شد','۱۰۰۰ سکه به کیف پولت اضافه شد.');return;
+ }
+ if(a==='storageTakeMenu'){showStorageTake();return}
+ if(a.startsWith('deposit:')){
+  if(!game.ownedHouse||!buildingInterior.active||currentBuilding()?.id!==game.ownedHouse){notify('صندوق شخصی','صندوق فقط در خانه خودت قابل استفاده است.');return}
+  let n=a.slice(8);if((game.inventory[n]||0)<1){notify('وسیله‌ای نداری','از این وسیله در کیف تو وجود ندارد.');return}
+  game.inventory[n]--;game.storage[n]=(game.storage[n]||0)+1;saveGame();showStorage();return;
+ }
+ if(a.startsWith('withdraw:')){
+  let n=a.slice(9);if((game.storage[n]||0)<1){notify('صندوق خالی است','از این وسیله در صندوق وجود ندارد.');return}
+  game.storage[n]--;game.inventory[n]=(game.inventory[n]||0)+1;saveGame();showStorageTake();return;
+ }
+ if(a.startsWith('enter:')){let b=buildings.find(x=>x.id===a.slice(6));if(b)enterBuilding(b);return}
+ if(a.startsWith('unlock:')){
+  let id=a.slice(7),b=buildings.find(x=>x.id===id);
+  if(!b||!b.locked){closeMenu();return}
+  if(game.keys<1){notify('کلید نداری','از بازارچه یک کلید بخر.');return}
+  game.keys--;game.unlockedHouses.push(id);saveGame();notify('🔓 خانه باز شد','قفل خانه باز شد. حالا می‌توانی وارد شوی.');return;
+ }
+ if(a==='key'){
+  if(game.coins<20){notify('سکه کافی نیست','برای خرید کلید ۲۰ سکه لازم داری.');return}
+  game.coins-=20;game.keys++;saveGame();notify('🗝 کلید خریدی','یک کلید به کیف تو اضافه شد.');return;
  }
  if(a==='returncity'){dungeon.inside=false;player.x=2550;player.y=890;closeMenu();saveGame();return}
  if(a.startsWith('travel:')){
   const i=Number(a.split(':')[1]),r=regions[i];if(!r)return;
   player.x=r.x+140;player.y=r.y+150;
   if(!game.discovered.includes(r.id)){game.discovered.push(r.id);game.xp+=20;notify('🌟 منطقه کشف شد','به '+r.name+' رسیدی! ۲۰ تجربه گرفتی.');levelCheck()}else closeMenu();
-  saveGame();return
+  saveGame();return;
  }
- if(a==='reload'){if(game.coins<3){notify('سکه کافی نیست','۳ سکه لازم داری.');return}game.coins-=3;game.ammo=game.maxAmmo;saveGame();notify('خشاب پر شد','مهماتت کامل شد.');return}
- if(a==='potion'){if(game.inventory['معجون']<1){notify('معجون نداری','از بازارچه معجون بخر.');return}if(game.health>=game.maxHealth){notify('سلامتی کامل است','فعلاً نیازی نداری.');return}game.inventory['معجون']--;game.health=Math.min(game.maxHealth,game.health+35);saveGame();notify('معجون مصرف شد','سلامتی‌ات بازیابی شد.');return}
+ if(a==='reload'){
+  if(game.coins<10){notify('سکه کافی نیست','برای پر کردن خشاب ۱۰ سکه لازم داری.');return}
+  game.coins-=10;game.ammo=game.maxAmmo;saveGame();notify('خشاب پر شد','مهماتت کامل شد.');return;
+ }
+ if(a==='potion'){
+  if(game.inventory['معجون']<1){notify('معجون نداری','از بازارچه معجون بخر.');return}
+  if(game.health>=game.maxHealth){notify('سلامتی کامل است','فعلاً نیازی نداری.');return}
+  game.inventory['معجون']--;game.health=Math.min(game.maxHealth,game.health+35);saveGame();notify('معجون مصرف شد','سلامتی‌ات بازیابی شد.');return;
+ }
  if(a.startsWith('chat:')||a.startsWith('gift:')||a.startsWith('npcjob:')){
   let p=a.split(':'),n=findNPC(p[1]);if(!n)return;
   if(p[0]==='chat'){n.friend=Math.min(10,n.friend+1);game.reputation++;n.mood='خوشحال';saveGame();notify('گفت‌وگوی دوستانه',n.name+' از صحبت با تو خوشحال شد.')}
   else if(p[0]==='gift'){if(game.coins<5){notify('سکه کافی نیست','۵ سکه لازم داری.');return}game.coins-=5;n.friend=Math.min(10,n.friend+2);game.reputation++;n.mood='بسیار خوشحال';saveGame();notify('هدیه داده شد',n.name+' خوشحال شد.')}
   else notify('پیشنهاد کار',n.job+'؛ برای کار به مغازه‌های شهر سر بزن.');
-  return
+  return;
  }
  if(a.startsWith('buy:')){
-  let p=a.split(':'),name=p[1],price=Number(p[2]);if(game.coins<price){notify('سکه کافی نیست','سکه بیشتری لازم داری.');return}
+  let p=a.split(':'),name=p[1],price=Number(p[2]);
+  if(game.coins<price){notify('سکه کافی نیست','سکه بیشتری لازم داری.');return}
   game.coins-=price;game.inventory[name]=(game.inventory[name]||0)+1;
-  if(name==='شمشیر')game.weapon=true;if(name==='تیر')game.ammo=Math.min(game.maxAmmo,game.ammo+5);
-  saveGame();notify('خرید موفق','یک '+name+' به کیف تو اضافه شد.');return
+  if(name==='شمشیر'||name==='شاتگان'||name==='AK-47')game.weapon=true;
+  if(name==='تیر')game.ammo=Math.min(game.maxAmmo,game.ammo+5);
+  saveGame();notify('خرید موفق','یک '+name+' به کیف تو اضافه شد.');return;
  }
- if(a==='armor'){if(game.coins<60){notify('سکه کافی نیست','۶۰ سکه لازم داری.');return}game.coins-=60;game.maxHealth+=15;game.health=game.maxHealth;saveGame();notify('زره خریدی','حداکثر سلامتی تو ۱۵ واحد افزایش یافت.');return}
+ if(a==='armor'){
+  if(game.coins<60){notify('سکه کافی نیست','۶۰ سکه لازم داری.');return}
+  game.coins-=60;game.maxHealth+=15;game.health=game.maxHealth;saveGame();notify('زره خریدی','حداکثر سلامتی تو ۱۵ واحد افزایش یافت.');return;
+ }
  if(a.startsWith('sell:')){
-  let p=a.split(':'),name=p[1],price=Number(p[2]);if((game.inventory[name]||0)<1){notify('کالایی نداری','برای فروش یک '+name+' لازم داری.');return}game.inventory[name]--;game.coins+=price;saveGame();notify('فروش موفق',price+' سکه گرفتی.');return
+  let p=a.split(':'),name=p[1],price=Number(p[2]);
+  if((game.inventory[name]||0)<1){notify('کالایی نداری','برای فروش یک '+name+' لازم داری.');return}
+  game.inventory[name]--;game.coins+=price;saveGame();notify('فروش موفق',price+' سکه گرفتی.');return;
  }
  if(a.startsWith('house:')){
-  let id=a.split(':')[1],b=buildings.find(x=>x.id===id);if(!b||game.coins<b.price){notify('سکه کافی نیست','برای خرید خانه سکه کافی نداری.');return}if(game.ownedHouse){notify('خانه داری','در حال حاضر یک خانه داری.');return}
-  game.coins-=b.price;game.ownedHouse=id;saveGame();notify('تبریک!','این خانه حالا متعلق به توست.');return
+  let id=a.split(':')[1],b=buildings.find(x=>x.id===id);
+  if(!b||game.coins<b.price){notify('سکه کافی نیست','برای خرید خانه سکه کافی نداری.');return}
+  if(game.ownedHouse){notify('خانه داری','در حال حاضر یک خانه داری.');return}
+  game.coins-=b.price;game.ownedHouse=id;saveGame();notify('تبریک!','این خانه حالا متعلق به توست.');return;
  }
  if(a.startsWith('work:')){
   if(gameTime-game.lastWork<18){notify('کمی استراحت کن','برای کار بعدی کمی صبر کن.');return}
   let place=a.split(':')[1],reward=place==='blacksmith'?12:place==='market'?10:place==='inn'?9:8;
   game.coins+=reward;game.workCount++;game.lastWork=gameTime;
   if(place==='bakery')game.inventory['نان']++;if(place==='blacksmith')game.inventory['سنگ']++;if(place==='market')game.inventory['چوب']++;
-  saveGame();notify('💰 دستمزد گرفتی',reward+' سکه دریافت کردی.');return
+  saveGame();notify('💰 دستمزد گرفتی',reward+' سکه دریافت کردی.');return;
  }
  if(a==='sleep'||a==='homesleep'){
   if(a==='sleep'&&game.coins<4){notify('سکه کافی نیست','۴ سکه لازم داری.');return}
-  if(a==='sleep')game.coins-=4;gameTime+=52.8;game.health=game.maxHealth;saveGame();notify('استراحت کردی','سلامتی‌ات کامل شد.');return
+  if(a==='homesleep'&&(!buildingInterior.active||!currentBuilding()||currentBuilding().id!==game.ownedHouse)){notify('خانه خودت لازم است','برای خوابیدن باید داخل خانه خودت باشی.');return}
+  if(a==='sleep')game.coins-=4;gameTime+=52.8;game.health=game.maxHealth;saveGame();notify('استراحت کردی','سلامتی‌ات کامل شد.');return;
  }
- if(a==='plant'){if(game.coins<2){notify('سکه کافی نیست','۲ سکه لازم داری.');return}if(game.planted>=10){notify('باغچه پر شده','ظرفیت باغچه تکمیل شده.');return}game.coins-=2;game.planted++;game.inventory['گل']++;saveGame();notify('گل کاشته شد','باغچه زیباتر شد.');return}
+ if(a==='plant'){
+  if(game.coins<2){notify('سکه کافی نیست','۲ سکه لازم داری.');return}
+  if(game.planted>=10){notify('باغچه پر شده','ظرفیت باغچه تکمیل شده.');return}
+  game.coins-=2;game.planted++;game.inventory['گل']++;saveGame();notify('گل کاشته شد','باغچه زیباتر شد.');return;
+ }
  if(a==='castle'){
   if(game.castleOwned){notify('قلعه ساخته شده','قلمرو تو از قبل قلعه دارد.');return}
   if(game.coins<200){notify('سکه کافی نیست','۲۰۰ سکه لازم داری.');return}
-  game.coins-=200;game.castleOwned=true;saveGame();notify('🏰 قلعه ساخته شد','اکنون صاحب یک قلعه هستی.');return
+  game.coins-=200;game.castleOwned=true;saveGame();notify('🏰 قلعه ساخته شد','اکنون صاحب یک قلعه هستی.');return;
  }
  if(a==='guard'){if(game.coins<30){notify('سکه کافی نیست','۳۰ سکه لازم داری.');return}game.coins-=30;game.guards++;saveGame();notify('نگهبان استخدام شد','یک نگهبان به قلمروت اضافه شد.');return}
  if(a==='upgrade'){let cost=game.territoryLevel*100;if(game.coins<cost){notify('سکه کافی نیست',cost+' سکه لازم داری.');return}game.coins-=cost;game.territoryLevel++;saveGame();notify('قلمرو ارتقا یافت','سطح قلمرو به '+game.territoryLevel+' رسید.');return}
  if(a==='treasury'){if(!game.treasury){notify('خزانه خالی است','هنوز درآمدی جمع نشده.');return}game.coins+=game.treasury;game.treasury=0;saveGame();notify('خزانه برداشت شد','سکه‌ها به کیف پولت منتقل شدند.');return}
- if(a==='dungeonEnter'){dungeon.inside=true;game.dungeonEntered=true;player.x=dungeon.x+130;player.y=dungeon.y+160;spawnDungeon();closeMenu();return}
- if(a==='dungeonExit'){dungeon.inside=false;player.x=3450;player.y=1880;closeMenu();return}
+ if(a==='dungeonEnter'){
+  dungeon.returnX=player.x;dungeon.returnY=player.y;dungeon.inside=true;game.dungeonEntered=true;
+  player.x=dungeon.x+130;player.y=dungeon.y+95;spawnDungeon();closeMenu();saveGame();return;
+ }
+ if(a==='dungeonExit'){
+  dungeon.inside=false;player.x=dungeon.returnX||3450;player.y=dungeon.returnY||1880;closeMenu();saveGame();return;
+ }
  if(a==='dungeonChest'){
   if(game.dungeonChest){notify('صندوق خالی است','قبلاً گنج را برداشته‌ای.');return}
-  game.dungeonChest=true;game.coins+=180;game.inventory['سنگ']+=5;game.inventory['معجون']+=2;game.xp+=80;saveGame();levelCheck();notify('💎 گنج پیدا شد','۱۸۰ سکه، ۵ سنگ، ۲ معجون و ۸۰ تجربه گرفتی.');return
+  game.dungeonChest=true;game.coins+=180;game.inventory['سنگ']+=5;game.inventory['معجون']+=2;game.xp+=80;saveGame();levelCheck();notify('💎 گنج پیدا شد','۱۸۰ سکه، ۵ سنگ، ۲ معجون و ۸۰ تجربه گرفتی.');return;
  }
 }
 menuActions.addEventListener('click',e=>{const b=e.target.closest('button[data-action]');if(b)handleAction(b.dataset.action)});
 
 function shoot(){
  if(!started||gameMenu.style.display==='flex')return;
+ if(buildingInterior.active){notify('داخل ساختمان','درون ساختمان امکان شلیک وجود ندارد.');return}
  if(!game.weapon){notify('سلاح نداری','برای مبارزه به سلاح نیاز داری.');return}
  if(game.ammo<=0){notify('مهمات تمام شد','خشاب را از کیف پر کن.');return}
  let now=performance.now();if(now-lastShot<350)return;lastShot=now;game.ammo--;
@@ -490,13 +655,20 @@ function shoot(){
 }
 document.getElementById('shoot').addEventListener('pointerdown',e=>{e.preventDefault();shoot()});
 function levelCheck(){while(game.xp>=game.level*50){game.xp-=game.level*50;game.level++;game.maxHealth+=5;game.health=Math.min(game.maxHealth,game.health+15);notify('🌟 سطح جدید','سطح تو به '+game.level+' رسید!')}}
-function respawnPlayer(){game.health=50;const r=regionAt(player.x,player.y);if(dungeon.inside){dungeon.inside=false;player.x=3450;player.y=1880}else if(r){player.x=r.x+140;player.y=r.y+150}else{player.x=1150;player.y=890}enemyProjectiles.length=0;saveGame();notify('استراحت اضطراری','به نقطه امن برگشتی و سلامتی‌ات به ۵۰ رسید.')}
-
+function respawnPlayer(){
+ game.health=50;
+ if(buildingInterior.active){player.x=buildingInterior.returnX;player.y=buildingInterior.returnY;buildingInterior.active=false;buildingInterior.buildingId=null}
+ else if(dungeon.inside){dungeon.inside=false;player.x=dungeon.returnX||3450;player.y=dungeon.returnY||1880}
+ else{const r=regionAt(player.x,player.y);if(r){player.x=r.x+140;player.y=r.y+150}else{player.x=1150;player.y=890}}
+ enemyProjectiles.length=0;saveGame();notify('استراحت اضطراری','به نقطه امن برگشتی و سلامتی‌ات به ۵۰ رسید.');
+}
 function updateCombat(dt){
+ if(buildingInterior.active)return;
  for(let i=projectiles.length-1;i>=0;i--){
   let p=projectiles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;let hit=false;
   for(const e of [...enemies,...dungeonEnemies]){
-   if(!e.alive)continue;if(Math.hypot(p.x-e.x,p.y-e.y)<(e.boss?28:20)){
+   if(!e.alive)continue;
+   if(Math.hypot(p.x-e.x,p.y-e.y)<(e.boss?28:20)){
     e.hp-=18;e.hit=5;hit=true;
     if(e.hp<=0){
      e.alive=false;game.kills++;game.coins+=e.reward;game.xp+=e.xpReward||20;
@@ -505,27 +677,24 @@ function updateCombat(dt){
      else if(e.boss){game.bossDefeated=true;game.coins+=150;game.xp+=100;notify('🏆 فرمانده شکست خورد','فرمانده قلعه تاریک شکست خورد! ۱۵۰ سکه جایزه گرفتی.')}
      else notify('🌟 دشمن شکست خورد',e.name+' را شکست دادی و جایزه گرفتی.');
      levelCheck();saveGame();
-    }break
+    }break;
    }
   }
-  if(hit||p.life<=0||p.x<0||p.y<0||p.x>world.w||p.y>world.h)projectiles.splice(i,1)
+  if(hit||p.life<=0||p.x<0||p.y<0||p.x>world.w||p.y>world.h)projectiles.splice(i,1);
  }
  for(let i=enemyProjectiles.length-1;i>=0;i--){
   const p=enemyProjectiles[i];p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
   if(Math.hypot(player.x-p.x,player.y-p.y)<17){game.health=Math.max(0,game.health-p.damage);enemyProjectiles.splice(i,1);tone(120,.12,'sine',.04);saveGame();if(game.health<=0)respawnPlayer()}
-  else if(p.life<=0)enemyProjectiles.splice(i,1)
+  else if(p.life<=0)enemyProjectiles.splice(i,1);
  }
  const playerRegion=regionAt(player.x,player.y);
  [...enemies,...(dungeon.inside?dungeonEnemies:[])].forEach(e=>{
-  if(!e.alive)return;e.phase+=.08*dt;if(e.hit>0)e.hit-=dt;if(e.touchCooldown>0)e.touchCooldown-=dt;e.attackCooldown-=dt;
+  if(!e.alive)return;e.phase+=.08*dt;if(e.hit>0)e.hit-=dt;if(e.touchCooldown>0)e.touchCooldown-=dt;if(e.attackCooldown>0)e.attackCooldown-=dt;
   const enemyRegion=e.regionId?regions.find(r=>r.id===e.regionId):null;
   if(enemyRegion?playerRegion!==enemyRegion:(!e.regionId&&!dungeon.inside))return;
   let d=Math.hypot(player.x-e.x,player.y-e.y);
   if(e.ranged&&d<310&&d>95&&e.attackCooldown<=0){let dx=(player.x-e.x)/d,dy=(player.y-e.y)/d;enemyProjectiles.push({x:e.x,y:e.y-8,vx:dx*3.5,vy:dy*3.5,life:95,damage:e.boss?17:12,color:e.color});e.attackCooldown=105}
-  else if(d<250&&d>27){let dx=(player.x-e.x)/d,dy=(player.y-e.y)/d,speed=e.speed||.35;if(e.shape==='bat')speed*=1.25;let nx=e.x+dx*speed*dt,ny=e.y+dy*speed*dt;
-   if(enemyRegion){nx=Math.max(enemyRegion.x+35,Math.min(enemyRegion.x+enemyRegion.w-35,nx));ny=Math.max(enemyRegion.y+35,Math.min(enemyRegion.y+enemyRegion.h-35,ny))}
-   if(!collide(nx,ny)){e.x=nx;e.y=ny}
-  }
+  else if(d<250&&d>27){let dx=(player.x-e.x)/d,dy=(player.y-e.y)/d,speed=e.speed||.35;if(e.shape==='bat')speed*=1.25;let nx=e.x+dx*speed*dt,ny=e.y+dy*speed*dt;if(enemyRegion){nx=Math.max(enemyRegion.x+35,Math.min(enemyRegion.x+enemyRegion.w-35,nx));ny=Math.max(enemyRegion.y+35,Math.min(enemyRegion.y+enemyRegion.h-35,ny))}if(!collide(nx,ny)){e.x=nx;e.y=ny}}
   if(d<28&&e.touchCooldown<=0){e.touchCooldown=65;game.health=Math.max(0,game.health-(e.damage||10));tone(100,.15,'sine',.04);saveGame();if(game.health<=0)respawnPlayer()}
  });
  if(enemies.filter(e=>e.alive&&e.type==='slime').length<5&&Math.random()<.002*dt)spawnSlime();
@@ -533,9 +702,7 @@ function updateCombat(dt){
  if(dungeon.inside&&!game.dungeonCleared&&dungeonEnemies.every(e=>!e.alive)){game.dungeonCleared=true;saveGame()}
 }
 function moveNPC(n,dt){
- const hour=Math.floor((gameTime%240)/10);
- let home=hour>=21||hour<6,p=n.route[n.target];
- if(home){p={x:n.homeX,y:n.homeY}}
+ const hour=Math.floor((gameTime%240)/10),home=hour>=21||hour<6;let p=home?{x:n.homeX,y:n.homeY}:n.route[n.target];
  let dx=p.x-n.x,dy=p.y-n.y,d=Math.hypot(dx,dy);
  if(d<8){n.target=(n.target+1)%n.route.length;n.pause=35+Math.random()*60;n.moving=false;return}
  if(n.pause>0){n.pause-=dt;n.moving=false;return}
@@ -546,15 +713,13 @@ function moveNPC(n,dt){
  n.mood=home?'خواب‌آلود':hour>=8&&hour<17?'مشغول کار':'در حال گشت‌وگذار';
 }
 function canMoveTo(x,y){
+ if(buildingInterior.active)return x>interiorRoom.x+28&&x<interiorRoom.x+interiorRoom.w-28&&y>interiorRoom.y+28&&y<interiorRoom.y+interiorRoom.h-25;
  if(dungeon.inside)return x>dungeon.x+15&&x<dungeon.x+dungeon.w-15&&y>dungeon.y+15&&y<dungeon.y+dungeon.h-15;
  const current=regionAt(player.x,player.y),target=regionAt(x,y);
  if(current){if(target!==current)return false;return x>current.x+27&&x<current.x+current.w-27&&y>current.y+27&&y<current.y+current.h-27}
  return target===null&&x>35&&x<2765&&y>35&&y<2265;
 }
-function updateWeather(dt){
- weatherTimer+=dt;
- if(weatherTimer>850){weatherTimer=0;const list=['clear','clear','rain','fog','snow'];weather=list[Math.floor(Math.random()*list.length)]}
-}
+function updateWeather(dt){weatherTimer+=dt;if(weatherTimer>850){weatherTimer=0;const list=['clear','clear','rain','fog','snow'];weather=list[Math.floor(Math.random()*list.length)]}}
 function update(dt){
  if(!started||gameMenu.style.display==='flex')return;
  gameTime+=dt/60;updateWeather(dt);
@@ -563,38 +728,80 @@ function update(dt){
  if(keys.w||keys.arrowup)dy-=1;if(keys.s||keys.arrowdown)dy+=1;if(keys.a||keys.arrowleft)dx-=1;if(keys.d||keys.arrowright)dx+=1;
  let len=Math.hypot(dx,dy);if(len>1){dx/=len;dy/=len}
  player.moving=len>.1;
- if(player.moving){player.frame+=running?.25:.15;if(Math.abs(dx)>Math.abs(dy))player.direction=dx>0?'right':'left';else player.direction=dy>0?'down':'up';let speed=running?4.5:2.5,nx=player.x+dx*speed*dt,ny=player.y+dy*speed*dt;if(!collide(nx,player.y)&&canMoveTo(nx,player.y))player.x=nx;if(!collide(player.x,ny)&&canMoveTo(player.x,ny))player.y=ny}
- if(!dungeon.inside){player.x=Math.max(35,Math.min(world.w-20,player.x));player.y=Math.max(35,Math.min(world.h-20,player.y))}
- camX+=(player.x-W/2-camX)*.12;camY+=(player.y-H/2-camY)*.12;camX=Math.max(0,Math.min(world.w-W,camX));camY=Math.max(0,Math.min(world.h-H,camY));
- npcs.forEach(n=>moveNPC(n,dt));updateCombat(dt);
+ if(player.moving){
+  player.frame+=running?.25:.15;
+  if(Math.abs(dx)>Math.abs(dy))player.direction=dx>0?'right':'left';else player.direction=dy>0?'down':'up';
+  let speed=running?4.5:2.5,nx=player.x+dx*speed*dt,ny=player.y+dy*speed*dt;
+  if(!collide(nx,player.y)&&canMoveTo(nx,player.y))player.x=nx;
+  if(!collide(player.x,ny)&&canMoveTo(player.x,ny))player.y=ny;
+ }
+ if(!dungeon.inside&&!buildingInterior.active){player.x=Math.max(35,Math.min(world.w-20,player.x));player.y=Math.max(35,Math.min(world.h-20,player.y))}
+ camX+=(player.x-W/2-camX)*.12;camY+=(player.y-H/2-camY)*.12;
+ camX=Math.max(0,Math.min(world.w-W,camX));camY=Math.max(0,Math.min(world.h-H,camY));
+ if(!buildingInterior.active)npcs.forEach(n=>moveNPC(n,dt));
+ updateCombat(dt);
  near=null;nearBuilding=null;nearPortal=null;nearDungeon=false;nearCastle=false;
- let best=85;for(const n of npcs){let d=Math.hypot(player.x-n.x,player.y-n.y);if(d<best){best=d;near=n}}
- let bestB=125;for(const b of buildings){let bx=Math.max(b.x,Math.min(player.x,b.x+b.w)),by=Math.max(b.y,Math.min(player.y,b.y+b.h)),d=Math.hypot(player.x-bx,player.y-by);if(d<bestB){bestB=d;nearBuilding=b}}
- let bp=90;for(const p of portals){let d=Math.hypot(player.x-p.x,player.y-p.y);if(d<bp){bp=d;nearPortal=p}}
- nearDungeon=!dungeon.inside&&Math.hypot(player.x-(dungeon.x+130),player.y-(dungeon.y+190))<100;
- nearCastle=Math.hypot(player.x-4700,player.y-1900)<145;
- if(nearPortal){near=null;nearBuilding=null;nearDungeon=false}
- else if(near&&nearBuilding){let dn=Math.hypot(player.x-near.x,player.y-near.y),bx=Math.max(nearBuilding.x,Math.min(player.x,nearBuilding.x+nearBuilding.w)),by=Math.max(nearBuilding.y,Math.min(player.y,nearBuilding.y+nearBuilding.h));if(Math.hypot(player.x-bx,player.y-by)<dn)near=null;else nearBuilding=null}
+ nearInteriorExit=nearInteriorChest=nearInteriorBed=nearInteriorMerchant=false;nearDungeonExit=false;
+ if(buildingInterior.active){
+  const b=currentBuilding(),x=player.x,y=player.y;
+  nearInteriorExit=Math.hypot(x-(interiorRoom.x+interiorRoom.w/2),y-(interiorRoom.y+interiorRoom.h-35))<65;
+  if(b&&b.type==='home'&&b.id===game.ownedHouse){
+   nearInteriorChest=Math.hypot(x-(interiorRoom.x+87),y-(interiorRoom.y+278))<75;
+   nearInteriorBed=Math.hypot(x-(interiorRoom.x+490),y-(interiorRoom.y+260))<75;
+  }
+  if(b&&['bakery','inn','blacksmith','market','armory'].includes(b.type))nearInteriorMerchant=Math.hypot(x-(interiorRoom.x+interiorRoom.w/2),y-(interiorRoom.y+125))<90;
+ }else if(dungeon.inside){
+  nearDungeonExit=Math.hypot(player.x-(dungeon.x+35),player.y-(dungeon.y+165))<65;
+ }else{
+  let best=85;for(const n of npcs){let d=Math.hypot(player.x-n.x,player.y-n.y);if(d<best){best=d;near=n}}
+  let bestB=125;for(const b of buildings){let bx=Math.max(b.x,Math.min(player.x,b.x+b.w)),by=Math.max(b.y,Math.min(player.y,b.y+b.h)),d=Math.hypot(player.x-bx,player.y-by);if(d<bestB){bestB=d;nearBuilding=b}}
+  let bp=90;for(const p of portals){let d=Math.hypot(player.x-p.x,player.y-p.y);if(d<bp){bp=d;nearPortal=p}}
+  nearDungeon=Math.hypot(player.x-(dungeon.x+130),player.y-(dungeon.y+190))<100;
+  nearCastle=Math.hypot(player.x-4700,player.y-1900)<145;
+  if(nearPortal){near=null;nearBuilding=null;nearDungeon=false}
+  else if(near&&nearBuilding){let dn=Math.hypot(player.x-near.x,player.y-near.y),bx=Math.max(nearBuilding.x,Math.min(player.x,nearBuilding.x+nearBuilding.w)),by=Math.max(nearBuilding.y,Math.min(player.y,nearBuilding.y+nearBuilding.h));if(Math.hypot(player.x-bx,player.y-by)<dn)near=null;else nearBuilding=null}
+ }
 }
 function getClock(){let m=(360+(gameTime/240)*1440)%1440,h=Math.floor(m/60),mi=Math.floor(m%60);return String(h).padStart(2,'0')+':'+String(mi).padStart(2,'0')}
 function draw(){
  ctx.clearRect(0,0,W,H);
- if(dungeon.inside){rect(camX,camY,W,H,'#211c29');for(let i=0;i<18;i++){let x=dungeon.x+(i*73)%dungeon.w,y=dungeon.y+(i*51)%dungeon.h;circle(x,y,8,'#494052')}drawDungeon()}
- else{drawGround();drawCityWall();drawRegionWalls();trees.forEach(drawTree);buildings.forEach(drawBuilding);drawCastle();drawDungeon()}
- npcs.forEach(drawNPC);enemies.forEach(drawEnemy);if(dungeon.inside)dungeonEnemies.forEach(drawEnemy);drawPortals();
+ if(buildingInterior.active){rect(camX,camY,W,H,'#211b17');drawInterior()}
+ else if(dungeon.inside){
+  rect(camX,camY,W,H,'#211c29');
+  for(let i=0;i<18;i++){let x=dungeon.x+(i*73)%dungeon.w,y=dungeon.y+(i*51)%dungeon.h;circle(x,y,8,'#494052')}
+  drawDungeon();
+  // در خروجی همیشه قابل مشاهده است
+  rect(dungeon.x+12,dungeon.y+145,42,48,'#33241d');rect(dungeon.x+18,dungeon.y+151,30,40,'#a47a48');
+  ctx.fillStyle='#f4d79c';ctx.font='11px Tahoma';ctx.textAlign='center';ctx.fillText('خروج',dungeon.x+33-camX,dungeon.y+137-camY);
+ }else{
+  drawGround();drawCityWall();drawRegionWalls();trees.forEach(drawTree);buildings.forEach(drawBuilding);drawCastle();drawDungeon();
+ }
+ if(!buildingInterior.active)npcs.forEach(drawNPC);
+ if(!buildingInterior.active){enemies.forEach(drawEnemy);if(dungeon.inside)dungeonEnemies.forEach(drawEnemy)}
+ if(!buildingInterior.active&&!dungeon.inside)drawPortals();
  projectiles.forEach(p=>{circle(p.x,p.y,5,'#b9edff');circle(p.x,p.y,2,'#fff')});
  enemyProjectiles.forEach(p=>{circle(p.x,p.y,7,p.color||'#b58bdb');circle(p.x,p.y,3,'#fff')});
  if(dungeon.inside&&!game.dungeonChest){rect(dungeon.x+190,dungeon.y+125,34,28,'#a87935');rect(dungeon.x+190,dungeon.y+125,34,7,'#e0b95c')}
- drawPlayer();drawLighting();drawWeather();if(!dungeon.inside)drawMinimap();
- const r=regionAt(player.x,player.y),place=dungeon.inside?'سیاه‌چال':r?r.name:'شهر قدیمی';
+ drawPlayer();drawLighting();drawWeather();if(!dungeon.inside&&!buildingInterior.active)drawMinimap();
+ const r=regionAt(player.x,player.y);
+ const place=buildingInterior.active?(currentBuilding()?.name||'ساختمان'):dungeon.inside?'سیاه‌چال':r?r.name:'شهر قدیمی';
  document.getElementById('stats').innerHTML='❤️ '+game.health+'/'+game.maxHealth+'<br>🪙 '+game.coins+'<br>✨ سطح '+game.level+' | XP '+game.xp+'<br>🔫 '+game.ammo+'/'+game.maxAmmo+'<br>📍 '+place+'<br>🕒 '+getClock()+'<br>🌦 '+({clear:'صاف',rain:'بارانی',fog:'مه‌آلود',snow:'برفی'}[weather]);
  const hint=document.getElementById('hint');
- if(nearPortal)hint.textContent='برای سفر با دروازه تعامل کن';
+ if(buildingInterior.active){
+  if(nearInteriorExit)hint.textContent='برای خروج از ساختمان تعامل کن';
+  else if(nearInteriorChest)hint.textContent='صندوق شخصی؛ برای مدیریت وسایل تعامل کن';
+  else if(nearInteriorBed)hint.textContent='برای خوابیدن و بازیابی سلامتی تعامل کن';
+  else if(nearInteriorMerchant)hint.textContent='برای خریدوفروش با فروشنده تعامل کن';
+  else hint.textContent='داخل ساختمان را بگرد؛ در خروجی پایین اتاق است';
+ }else if(dungeon.inside){
+  if(nearDungeonExit)hint.textContent='برای خروج از سیاه‌چال تعامل کن';
+  else if(!game.dungeonChest&&Math.hypot(player.x-(dungeon.x+205),player.y-(dungeon.y+140))<65)hint.textContent='صندوق گنج؛ برای باز کردن تعامل کن';
+  else hint.textContent='سیاه‌چال را پاک‌سازی کن؛ خروج همیشه در دسترس است';
+ }else if(nearPortal)hint.textContent='برای سفر با دروازه تعامل کن';
  else if(nearDungeon)hint.textContent='ورودی سیاه‌چال؛ برای ورود تعامل کن';
  else if(nearCastle)hint.textContent='برای مدیریت قلعه تعامل کن';
  else if(near)hint.textContent='برای صحبت با '+near.name+' تعامل کن';
- else if(nearBuilding)hint.textContent='برای تعامل با '+nearBuilding.name+' دکمه تعامل را بزن';
- else if(dungeon.inside)hint.textContent='سیاه‌چال را پاک‌سازی کن و گنج را پیدا کن';
+ else if(nearBuilding)hint.textContent='برای ورود به '+nearBuilding.name+' تعامل کن';
  else if(r)hint.textContent='منطقه: '+r.name+' | دشمن‌ها را پیدا کن و شکست بده';
  else hint.textContent='شهر را بگرد، تجارت کن یا از دروازه جهان عبور کن';
 }
